@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" force="true" value="testing"/>
+        <env name="APP_KEY" force="true" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
+        <env name="APP_URL" force="true" value="http://localhost"/>
+        <env name="APP_CONFIG_CACHE" force="true" value="bootstrap/cache/config-testing.php"/>
+        <env name="APP_ROUTES_CACHE" force="true" value="bootstrap/cache/routes-testing.php"/>
+        <env name="APP_EVENTS_CACHE" force="true" value="bootstrap/cache/events-testing.php"/>
+        <env name="BCRYPT_ROUNDS" force="true" value="4"/>
+        <env name="CACHE_DRIVER" force="true" value="array"/>
+        <env name="DB_CONNECTION" force="true" value="sqlite"/>
+        <env name="DB_DATABASE" force="true" value=":memory:"/>
+        <env name="MAIL_MAILER" force="true" value="array"/>
+        <env name="QUEUE_CONNECTION" force="true" value="sync"/>
+        <env name="REMOTE_SERVICE_ASYNC" force="true" value="false"/>
+        <env name="SESSION_DRIVER" force="true" value="array"/>
+        <env name="BROADCAST_DRIVER" force="true" value="log"/>
+    </php>
+</phpunit>

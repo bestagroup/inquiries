@@ -1,0 +1,6 @@
+@extends('layouts.base')
+@section('title','مدیریت سرویس‌ها')@section('page-title','مدیریت سرویس‌ها')
+@section('content')
+<div class="card"><div class="card-header d-flex justify-content-between"><div><h5 class="mb-1">سرویس‌های استعلامی</h5><div class="text-muted small">تعریف Endpoint، ورودی، خروجی و سیاست اجرای سرویس</div></div><a class="btn btn-primary" href="{{ route('admin.services.create') }}"><i class="bi bi-plus-lg"></i> سرویس جدید</a></div><div class="card-body"><div class="table-responsive"><table id="services-table" class="table table-striped align-middle w-100"><thead><tr><th>نام</th><th>کد</th><th>Method</th><th>کاربران</th><th>وضعیت</th><th>عملیات</th></tr></thead></table></div></div></div>
+@endsection
+@push('scripts')<script>document.addEventListener('DOMContentLoaded',()=>{new DataTable('#services-table',{processing:true,serverSide:true,ajax:@json(route('admin.services.index')),columns:[{data:'name',name:'name'},{data:'slug',name:'slug'},{data:'http_method',name:'http_method'},{data:'active_users_count',searchable:false},{data:'is_active',name:'is_active'},{data:'action',orderable:false,searchable:false}],language:{search:'جستجو:',lengthMenu:'نمایش _MENU_ رکورد',info:'نمایش _START_ تا _END_ از _TOTAL_',zeroRecords:'نتیجه‌ای یافت نشد',paginate:{next:'بعدی',previous:'قبلی'}}});});</script>@endpush
