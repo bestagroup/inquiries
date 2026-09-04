@@ -10,6 +10,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttempt;
 use App\Services\RemoteServices\EndpointSecurityPolicy;
 use App\Services\RemoteServices\ResponseMapper;
+use App\Services\RemoteServices\ServiceTokenProvider;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,7 @@ class ExecuteServiceRequest
     public function __construct(
         private readonly EndpointSecurityPolicy $endpointPolicy,
         private readonly ResponseMapper $responseMapper,
+        private readonly ServiceTokenProvider $serviceTokenProvider,
     ) {}
 
     public function execute(ServiceRequest $serviceRequest): ServiceRequestAttempt
@@ -151,7 +153,12 @@ class ExecuteServiceRequest
     private function send(ServiceRequest $serviceRequest): Response
     {
         $service = $serviceRequest->service;
-        $pending = Http::withHeaders((array) $service->headers)
+        $headers = collect((array) $service->headers)
+            ->reject(fn ($value, $key): bool => strtolower((string) $key) === 'authorization')
+            ->put('Authorization', $this->serviceTokenProvider->authorizationHeader())
+            ->all();
+
+        $pending = Http::withHeaders($headers)
             ->timeout($service->timeout_seconds)
             ->connectTimeout($service->connect_timeout_seconds)
             ->withoutRedirecting()

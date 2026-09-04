@@ -11,7 +11,10 @@
     $outputRows = old('outputs', $outputs->map(fn($f)=>[
         'key'=>$f->key,'label'=>$f->label,'type'=>$f->type->value,'json_path'=>$f->json_path,
     ])->values()->all());
-    $headers = old('headers_json', $service->exists ? json_encode($service->headers ?? [], JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) : "{}" );
+    $serviceHeaders = collect($service->headers ?? [])
+        ->reject(fn($value, $key) => strtolower((string) $key) === 'authorization')
+        ->all();
+    $headers = old('headers_json', $service->exists ? json_encode($serviceHeaders, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) : "{}" );
 @endphp
 <form method="POST" action="{{ $service->exists ? route('admin.services.update',$service) : route('admin.services.store') }}">
     @csrf @if($service->exists) @method('PUT') @endif
@@ -28,7 +31,7 @@
     </div></div></div>
 
     <div class="card mb-3"><div class="card-header"><strong>تنظیمات ارتباط</strong></div><div class="card-body"><div class="row g-3">
-        <div class="col-lg-6"><label class="form-label">HTTP Headers (JSON)</label><textarea class="form-control font-monospace" dir="ltr" rows="7" name="headers_json">{{ $headers }}</textarea><div class="form-text">برای API Key/Bearer Header از این بخش استفاده کنید؛ مقدار در دیتابیس رمزنگاری می‌شود.</div></div>
+        <div class="col-lg-6"><label class="form-label">HTTP Headers (JSON)</label><textarea class="form-control font-monospace" dir="ltr" rows="7" name="headers_json">{{ $headers }}</textarea><div class="form-text">فقط Headerهای اختصاصی این سرویس را وارد کنید؛ Authorization از بخش «توکن سرویس‌ها» به‌صورت سراسری اعمال می‌شود.</div></div>
         <div class="col-lg-6"><div class="row g-3"><div class="col-6"><label class="form-label">Timeout (sec)</label><input class="form-control" type="number" min="1" max="120" name="timeout_seconds" value="{{ old('timeout_seconds',$service->timeout_seconds ?? 15) }}"></div><div class="col-6"><label class="form-label">Connect Timeout</label><input class="form-control" type="number" min="1" max="30" name="connect_timeout_seconds" value="{{ old('connect_timeout_seconds',$service->connect_timeout_seconds ?? 5) }}"></div><div class="col-6"><label class="form-label">Retry</label><input class="form-control" type="number" min="0" max="5" name="retry_times" value="{{ old('retry_times',$service->retry_times ?? 1) }}"></div><div class="col-6"><label class="form-label">Retry Delay (ms)</label><input class="form-control" type="number" min="0" max="10000" name="retry_delay_ms" value="{{ old('retry_delay_ms',$service->retry_delay_ms ?? 200) }}"></div><div class="col-6"><label class="form-label">Rate / minute</label><input class="form-control" type="number" min="1" max="10000" name="rate_limit_per_minute" value="{{ old('rate_limit_per_minute',$service->rate_limit_per_minute ?? 60) }}"></div><div class="col-6"><label class="form-label">ترتیب نمایش</label><input class="form-control" type="number" min="0" name="sort_order" value="{{ old('sort_order',$service->sort_order ?? 0) }}"></div></div></div>
     </div></div></div>
 

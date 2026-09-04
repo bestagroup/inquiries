@@ -110,7 +110,7 @@ class SaveServiceRequest extends FormRequest
                 return;
             }
 
-            $blockedHeaders = ['host', 'content-length', 'transfer-encoding', 'connection'];
+            $blockedHeaders = ['host', 'content-length', 'transfer-encoding', 'connection', 'authorization'];
             foreach (get_object_vars($decoded) as $key => $value) {
                 if (! is_string($key) || preg_match('/^[!#$%&\'*+.^_`|~0-9A-Za-z-]+$/', $key) !== 1 || (! is_scalar($value) && ! is_null($value))) {
                     $validator->errors()->add('headers_json', 'کلید و مقدار Header باید ساده و معتبر باشند.');

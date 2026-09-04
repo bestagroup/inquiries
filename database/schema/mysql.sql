@@ -15,7 +15,8 @@ INSERT INTO migrations (migration, batch) VALUES
   ('2026_09_04_000300_create_service_user_table', 1),
   ('2026_09_04_000400_create_service_requests_table', 1),
   ('2026_09_04_000500_create_service_request_attempts_table', 1),
-  ('2026_09_04_000600_create_audit_logs_table', 1);
+  ('2026_09_04_000600_create_audit_logs_table', 1),
+  ('2026_09_05_000700_create_system_settings_table', 2);
 
 CREATE TABLE users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -47,6 +48,14 @@ CREATE TABLE sessions (
   last_activity INT NOT NULL,
   INDEX sessions_user_id_index (user_id),
   INDEX sessions_last_activity_index (last_activity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE system_settings (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `key` VARCHAR(128) NOT NULL UNIQUE,
+  value TEXT NULL COMMENT 'Laravel encrypted string cast',
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE services (

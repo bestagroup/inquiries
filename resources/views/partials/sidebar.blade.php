@@ -10,6 +10,7 @@
         <div class="sidebar-title">مدیریت</div>
         <a class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}"><i class="bi bi-people"></i> کاربران</a>
         <a class="sidebar-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}"><i class="bi bi-hdd-network"></i> سرویس‌ها</a>
+        <a class="sidebar-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.integration.edit') }}"><i class="bi bi-shield-lock"></i> توکن سرویس‌ها</a>
         <a class="sidebar-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}" href="{{ route('admin.requests.index') }}"><i class="bi bi-clock-history"></i> همه درخواست‌ها</a>
     @else
         <div class="sidebar-title">خدمات من</div>
