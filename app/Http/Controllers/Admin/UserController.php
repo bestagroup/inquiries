@@ -20,7 +20,12 @@ class UserController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
-            $query = User::query()->select(['id', 'name', 'email', 'phone', 'is_active', 'created_at'])->where('role', UserRole::User->value)->withCount(['services as active_services_count' => fn ($q) => $q->wherePivot('is_active', true)]);
+            $query = User::query()
+                ->select(['id', 'name', 'email', 'phone', 'is_active', 'created_at'])
+                ->where('role', UserRole::User->value)
+                ->withCount([
+                    'services as active_services_count' => fn ($query) => $query->where('service_user.is_active', true),
+                ]);
 
             return DataTables::eloquent($query)
                 ->editColumn('is_active', fn (User $user) => $user->is_active ? 'فعال' : 'غیرفعال')

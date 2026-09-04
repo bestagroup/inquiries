@@ -3,7 +3,8 @@
 @import 'datatables.net-bs5/css/dataTables.bootstrap5.css';
 
 :root { --sidebar-width: 265px; --app-bg: #f5f6f8; --app-primary: #696cff; }
-body { font-family: Tahoma, Arial, sans-serif; background: var(--app-bg); color: #444; min-height: 100vh; }
+body, button, input, select, textarea, .table { font-family: 'IRANSans', Tahoma, Arial, sans-serif; }
+body { background: var(--app-bg); color: #444; min-height: 100vh; }
 a { text-decoration: none; }
 .app-shell { min-height: 100vh; }
 .app-sidebar { width: var(--sidebar-width); position: fixed; right: 0; top: 0; bottom: 0; background: #fff; border-left: 1px solid #e8e9ed; padding: 1.25rem 1rem; overflow-y: auto; z-index: 1030; }

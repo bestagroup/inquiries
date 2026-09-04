@@ -57,6 +57,47 @@ class ServiceGatewayTest extends TestCase
         $this->actingAs($user)->get(route('login'))->assertRedirect(route('dashboard'));
     }
 
+    public function test_all_data_tables_return_their_database_records(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create(['name' => 'کاربر جدول']);
+        $service = $this->makeService();
+        $service->update(['name' => 'سرویس جدول']);
+        $user->services()->attach($service->id, ['is_active' => true, 'assigned_at' => now()]);
+        ServiceRequest::query()->create([
+            'user_id' => $user->id,
+            'service_id' => $service->id,
+            'input_payload' => ['code' => 'ABC'],
+            'status' => 'pending',
+        ]);
+
+        $ajax = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        $this->actingAs($admin)->withHeaders($ajax)
+            ->get(route('admin.users.index', ['draw' => 1, 'start' => 0, 'length' => 10]))
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1)
+            ->assertJsonPath('data.0.name', 'کاربر جدول');
+
+        $this->actingAs($admin)->withHeaders($ajax)
+            ->get(route('admin.services.index', ['draw' => 1, 'start' => 0, 'length' => 10]))
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1)
+            ->assertJsonPath('data.0.name', 'سرویس جدول');
+
+        $this->actingAs($admin)->withHeaders($ajax)
+            ->get(route('admin.requests.index', ['draw' => 1, 'start' => 0, 'length' => 10]))
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1)
+            ->assertJsonPath('data.0.user_name', 'کاربر جدول');
+
+        $this->actingAs($user)->withHeaders($ajax)
+            ->get(route('requests.index', ['draw' => 1, 'start' => 0, 'length' => 10]))
+            ->assertOk()
+            ->assertJsonPath('recordsFiltered', 1)
+            ->assertJsonPath('data.0.service_name', 'سرویس جدول');
+    }
+
     public function test_user_cannot_execute_unassigned_service(): void
     {
         $user = User::factory()->create();

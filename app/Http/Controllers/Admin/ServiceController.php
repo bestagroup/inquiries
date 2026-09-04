@@ -20,7 +20,11 @@ class ServiceController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
-            $query = RemoteService::query()->select(['id', 'name', 'slug', 'http_method', 'is_active', 'created_at'])->withCount(['users as active_users_count' => fn ($q) => $q->wherePivot('is_active', true)]);
+            $query = RemoteService::query()
+                ->select(['id', 'name', 'slug', 'http_method', 'is_active', 'created_at'])
+                ->withCount([
+                    'users as active_users_count' => fn ($query) => $query->where('service_user.is_active', true),
+                ]);
 
             return DataTables::eloquent($query)
                 ->editColumn('http_method', fn (RemoteService $service) => $service->http_method->value)
