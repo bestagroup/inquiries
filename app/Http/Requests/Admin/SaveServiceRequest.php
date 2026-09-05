@@ -35,6 +35,8 @@ class SaveServiceRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'alpha_dash:ascii', 'max:100', Rule::unique('services', 'slug')->ignore($id)],
             'description' => ['nullable', 'string', 'max:5000'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'icon' => ['nullable', 'regex:/^bi-[a-z0-9-]+$/', 'max:64'],
             'endpoint_url' => ['required', 'url:http,https', 'max:2048'],
             'http_method' => ['required', Rule::enum(ServiceHttpMethod::class)],
             'payload_mode' => ['required', Rule::enum(PayloadMode::class)],

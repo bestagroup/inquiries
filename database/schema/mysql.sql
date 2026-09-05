@@ -16,7 +16,8 @@ INSERT INTO migrations (migration, batch) VALUES
   ('2026_09_04_000400_create_service_requests_table', 1),
   ('2026_09_04_000500_create_service_request_attempts_table', 1),
   ('2026_09_04_000600_create_audit_logs_table', 1),
-  ('2026_09_05_000700_create_system_settings_table', 2);
+  ('2026_09_05_000700_create_system_settings_table', 2),
+  ('2026_09_05_000800_add_catalog_metadata_to_services_table', 3);
 
 CREATE TABLE users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -63,6 +64,8 @@ CREATE TABLE services (
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(100) NOT NULL UNIQUE,
   description TEXT NULL,
+  category VARCHAR(100) NULL,
+  icon VARCHAR(64) NULL,
   endpoint_url VARCHAR(2048) NOT NULL,
   http_method VARCHAR(10) NOT NULL DEFAULT 'POST',
   payload_mode VARCHAR(16) NOT NULL DEFAULT 'json',
@@ -77,7 +80,8 @@ CREATE TABLE services (
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   sort_order INT UNSIGNED NOT NULL DEFAULT 0,
   created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL,
-  INDEX services_active_sort_idx (is_active, sort_order)
+  INDEX services_active_sort_idx (is_active, sort_order),
+  INDEX services_category_index (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE service_fields (

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\RemoteService;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -18,7 +19,7 @@ class DatabaseSeeder extends Seeder
             throw new RuntimeException('ADMIN_PASSWORD must be configured before production seeding.');
         }
 
-        User::query()->updateOrCreate(
+        $admin = User::query()->updateOrCreate(
             ['email' => $email],
             [
                 'name' => (string) env('ADMIN_NAME', 'System Administrator'),
@@ -26,6 +27,14 @@ class DatabaseSeeder extends Seeder
                 'role' => UserRole::Admin,
                 'is_active' => true,
             ]
+        );
+
+        $this->call(ServiceCatalogSeeder::class);
+
+        $admin->services()->syncWithoutDetaching(
+            RemoteService::query()->pluck('id')->mapWithKeys(fn (int $id) => [
+                $id => ['is_active' => true, 'assigned_at' => now()],
+            ])->all()
         );
     }
 }

@@ -18,7 +18,7 @@ class RemoteService extends Model
     protected $table = 'services';
 
     protected $fillable = [
-        'name', 'slug', 'description', 'endpoint_url', 'http_method', 'payload_mode',
+        'name', 'slug', 'description', 'category', 'icon', 'endpoint_url', 'http_method', 'payload_mode',
         'response_format', 'headers', 'timeout_seconds', 'connect_timeout_seconds',
         'retry_times', 'retry_delay_ms', 'rate_limit_per_minute', 'allow_resubmit',
         'is_active', 'sort_order',
