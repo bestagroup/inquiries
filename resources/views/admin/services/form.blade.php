@@ -49,8 +49,29 @@ document.addEventListener('DOMContentLoaded',()=>{
  function inputRow(v={},i){return `<div class="section-box mb-2 field-row"><div class="row g-2 align-items-end"><div class="col-md-2"><label class="form-label">Key</label><input class="form-control" dir="ltr" name="inputs[${i}][key]" value="${esc(v.key)}" required></div><div class="col-md-2"><label class="form-label">عنوان</label><input class="form-control" name="inputs[${i}][label]" value="${esc(v.label)}" required></div><div class="col-md-2"><label class="form-label">نوع</label><select class="form-select" name="inputs[${i}][type]">${['text','number','boolean','date','select'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="col-md-2"><label class="form-label">Validation</label><input class="form-control" dir="ltr" name="inputs[${i}][validation_rules]" value="${esc(v.validation_rules)}" placeholder="max:20|email"></div><div class="col-md-2"><label class="form-label">Default</label><input class="form-control" name="inputs[${i}][default_value]" value="${esc(v.default_value)}"></div><div class="col-md-2 text-end"><button type="button" class="btn btn-outline-danger remove-row">حذف</button></div><div class="col-md-6"><label class="form-label">Options (برای select)</label><input class="form-control" name="inputs[${i}][options]" value="${esc(v.options)}" placeholder="A,B,C"></div><div class="col-md-3 form-check mt-4"><input type="hidden" name="inputs[${i}][is_required]" value="0"><input class="form-check-input" type="checkbox" name="inputs[${i}][is_required]" value="1" ${Number(v.is_required)?'checked':''}><label class="form-check-label">اجباری</label></div><div class="col-md-3 form-check mt-4"><input type="hidden" name="inputs[${i}][is_sensitive]" value="0"><input class="form-check-input" type="checkbox" name="inputs[${i}][is_sensitive]" value="1" ${Number(v.is_sensitive)?'checked':''}><label class="form-check-label">حساس / مخفی</label></div></div></div>`}
  function outputRow(v={},i){return `<div class="section-box mb-2 field-row"><div class="row g-2 align-items-end"><div class="col-md-3"><label class="form-label">Key</label><input class="form-control" dir="ltr" name="outputs[${i}][key]" value="${esc(v.key)}" required></div><div class="col-md-3"><label class="form-label">عنوان</label><input class="form-control" name="outputs[${i}][label]" value="${esc(v.label)}" required></div><div class="col-md-2"><label class="form-label">نوع</label><select class="form-select" name="outputs[${i}][type]">${['text','number','boolean','date','select'].map(x=>`<option ${v.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="col-md-3"><label class="form-label">JSON Path</label><input class="form-control" dir="ltr" name="outputs[${i}][json_path]" value="${esc(v.json_path)}" placeholder="data.result.name"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-outline-danger remove-row">×</button></div></div></div>`}
  function render(){inputBox.innerHTML=inputRows.map(inputRow).join('')||'<div class="text-muted small empty-input">ورودی تعریف نشده است.</div>';outputBox.innerHTML=outputRows.map(outputRow).join('')||'<div class="text-muted small empty-output">خروجی تعریف نشده؛ پاسخ کامل ذخیره می‌شود.</div>';}
- document.getElementById('add-input').addEventListener('click',()=>{inputRows.push({type:'text'});render();}); document.getElementById('add-output').addEventListener('click',()=>{outputRows.push({type:'text'});render();});
- document.addEventListener('click',e=>{if(!e.target.classList.contains('remove-row'))return;const row=e.target.closest('.field-row'),parent=row.parentElement,idx=[...parent.children].filter(x=>x.classList.contains('field-row')).indexOf(row);if(parent===inputBox)inputRows.splice(idx,1);else outputRows.splice(idx,1);render();}); render();
+ function addRow(box,template){
+  box.querySelector('.empty-input, .empty-output')?.remove();
+  box.insertAdjacentHTML('beforeend',template({type:'text'},box.querySelectorAll('.field-row').length));
+ }
+ document.getElementById('add-input').addEventListener('click',()=>addRow(inputBox,inputRow));
+ document.getElementById('add-output').addEventListener('click',()=>addRow(outputBox,outputRow));
+ function removeRow(event){
+  const button=event.target.closest('.remove-row');
+  if(!button)return;
+  const row=button.closest('.field-row'),box=row.parentElement;
+  row.remove();
+  // Keep submitted indexes contiguous without recreating the remaining controls.
+  const rows=box.querySelectorAll('.field-row');
+  rows.forEach((fieldRow,index)=>fieldRow.querySelectorAll('[name]').forEach(control=>{
+   control.name=control.name.replace(/\[\d+\]/,`[${index}]`);
+  }));
+  if(!rows.length)box.innerHTML=box===inputBox
+   ?'<div class="text-muted small empty-input">ورودی تعریف نشده است.</div>'
+   :'<div class="text-muted small empty-output">خروجی تعریف نشده؛ پاسخ کامل ذخیره می‌شود.</div>';
+ }
+ inputBox.addEventListener('click',removeRow);
+ outputBox.addEventListener('click',removeRow);
+ render();
 });
 </script>
 @endpush
