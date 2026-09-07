@@ -7,6 +7,7 @@ use App\Enums\AttemptStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttempt;
+use App\Services\Billing\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,9 +20,7 @@ class ExecuteRemoteServiceRequest implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
-
     public int $timeout = 840;
-
     public bool $failOnTimeout = true;
 
     public function __construct(
@@ -56,6 +55,8 @@ class ExecuteRemoteServiceRequest implements ShouldQueue
 
     private function markAsFailed(Throwable $exception): void
     {
+        app(WalletService::class)->release($this->executionToken);
+
         $message = mb_substr($exception->getMessage() ?: 'اجرای سرویس با خطا متوقف شد.', 0, 1000);
         $serviceRequest = ServiceRequest::query()
             ->whereKey($this->serviceRequestId)

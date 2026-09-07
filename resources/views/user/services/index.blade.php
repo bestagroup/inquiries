@@ -13,12 +13,9 @@
             <h1>سرویس‌های استعلام</h1>
             <p>سرویس مورد نیاز را پیدا کنید و استعلام جدید را در چند مرحله کوتاه ثبت کنید.</p>
         </div>
-        @if(auth()->user()->isAdmin())
-            <div class="page-heading-actions">
-                <a class="btn btn-outline-secondary" href="{{ route('admin.services.index') }}"><i class="bi bi-sliders"></i> مدیریت سرویس‌ها</a>
-                <a class="btn btn-primary" href="{{ route('admin.services.create') }}"><i class="bi bi-plus-lg"></i> تعریف سرویس</a>
-            </div>
-        @endif
+        <div class="page-heading-actions">
+            <a class="btn btn-outline-primary" href="{{ route('wallet.show') }}"><i class="bi bi-wallet2"></i> موجودی: {{ number_format($wallet->availableBalance()) }} {{ config('billing.currency_label') }}</a>
+        </div>
     </header>
 
     <section class="catalog-toolbar" aria-label="جست‌وجو و فیلتر سرویس‌ها">
@@ -42,9 +39,7 @@
 
     <div class="row g-3 service-card-grid" id="service-grid">
         @forelse($services as $service)
-            <div class="col-sm-6 col-xl-4 service-card-column"
-                 data-category="{{ $service->category }}"
-                 data-search="{{ $service->name }} {{ $service->description }} {{ $service->slug }}">
+            <div class="col-sm-6 col-xl-4 service-card-column" data-category="{{ $service->category }}" data-search="{{ $service->name }} {{ $service->description }} {{ $service->slug }}">
                 <article class="catalog-service-card h-100">
                     <div class="catalog-service-main">
                         <span class="catalog-service-icon" aria-hidden="true"><i class="bi {{ $service->icon ?: 'bi-hdd-network' }}"></i></span>
@@ -57,30 +52,21 @@
                         </div>
                     </div>
                     <p>{{ \Illuminate\Support\Str::limit((string) $service->description, 145) }}</p>
+                    <div class="small text-muted mb-2"><i class="bi bi-cash-coin"></i> تعرفه: {{ $service->price_amount > 0 ? number_format($service->price_amount).' '.config('billing.currency_label') : 'رایگان' }}</div>
                     <footer>
                         <span><i class="bi bi-input-cursor-text"></i> {{ $service->inputFields->count() }} ورودی</span>
-                        <a href="{{ route('services.show', $service) }}" aria-label="شروع {{ $service->name }}">
-                            شروع استعلام <i class="bi bi-arrow-left"></i>
-                        </a>
+                        <a href="{{ route('services.show', $service) }}" aria-label="شروع {{ $service->name }}">شروع استعلام <i class="bi bi-arrow-left"></i></a>
                     </footer>
                 </article>
             </div>
         @empty
-            <div class="col-12">
-                <div class="catalog-empty">
-                    <i class="bi bi-inboxes"></i>
-                    <h2>سرویسی برای حساب شما فعال نشده است</h2>
-                    <p>برای دریافت دسترسی با مدیر سامانه در ارتباط باشید.</p>
-                </div>
-            </div>
+            <div class="col-12"><div class="catalog-empty"><i class="bi bi-inboxes"></i><h2>سرویسی برای حساب شما فعال نشده است</h2><p>برای دریافت دسترسی با مدیر سامانه در ارتباط باشید.</p></div></div>
         @endforelse
     </div>
 
     @if($services->isNotEmpty())
         <div class="catalog-empty d-none" id="service-no-results">
-            <i class="bi bi-search"></i>
-            <h2>سرویسی با این مشخصات پیدا نشد</h2>
-            <p>عبارت جست‌وجو یا دسته‌بندی انتخاب‌شده را تغییر دهید.</p>
+            <i class="bi bi-search"></i><h2>سرویسی با این مشخصات پیدا نشد</h2><p>عبارت جست‌وجو یا دسته‌بندی انتخاب‌شده را تغییر دهید.</p>
             <button type="button" class="btn btn-sm btn-outline-primary" id="service-filter-reset">پاک‌کردن فیلترها</button>
         </div>
     @endif
@@ -92,46 +78,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     const search = document.getElementById('service-search');
     if (!search) return;
-
     const cards = [...document.querySelectorAll('.service-card-column')];
     const filters = [...document.querySelectorAll('.catalog-filter')];
     const empty = document.getElementById('service-no-results');
     const count = document.getElementById('visible-service-count');
     let selectedCategory = 'all';
-
     const normalize = value => String(value ?? '').trim().toLocaleLowerCase('fa');
     const applyFilters = () => {
         const term = normalize(search.value);
         let visible = 0;
-
         cards.forEach(card => {
-            const matchesCategory = selectedCategory === 'all' || card.dataset.category === selectedCategory;
-            const matchesSearch = !term || normalize(card.dataset.search).includes(term);
-            const show = matchesCategory && matchesSearch;
+            const show = (selectedCategory === 'all' || card.dataset.category === selectedCategory) && (!term || normalize(card.dataset.search).includes(term));
             card.classList.toggle('d-none', !show);
             if (show) visible++;
         });
-
         count.textContent = visible.toLocaleString('fa-IR');
         empty?.classList.toggle('d-none', visible !== 0);
     };
-
     filters.forEach(filter => filter.addEventListener('click', () => {
         selectedCategory = filter.dataset.category;
-        filters.forEach(item => {
-            const active = item === filter;
-            item.classList.toggle('active', active);
-            item.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
+        filters.forEach(item => { const active = item === filter; item.classList.toggle('active', active); item.setAttribute('aria-pressed', active ? 'true' : 'false'); });
         applyFilters();
     }));
-
     search.addEventListener('input', applyFilters);
-    document.getElementById('service-filter-reset')?.addEventListener('click', () => {
-        search.value = '';
-        filters[0]?.click();
-        search.focus();
-    });
+    document.getElementById('service-filter-reset')?.addEventListener('click', () => { search.value = ''; filters[0]?.click(); search.focus(); });
 });
 </script>
 @endpush

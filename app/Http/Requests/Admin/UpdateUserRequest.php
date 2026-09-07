@@ -23,6 +23,7 @@ class UpdateUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:32', Rule::unique('users', 'phone')->ignore($id)],
             'password' => ['nullable', 'string', 'min:10', 'max:128', 'confirmed'],
             'is_active' => ['required', 'boolean'],
+            'wallet_balance' => ['nullable', 'integer', 'min:0', 'max:9000000000000000'],
             'service_ids' => ['nullable', 'array'],
             'service_ids.*' => ['integer', Rule::exists('services', 'id')->whereNull('deleted_at')],
         ];

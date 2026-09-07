@@ -20,6 +20,7 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:32', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:10', 'max:128', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
+            'wallet_balance' => ['nullable', 'integer', 'min:0', 'max:9000000000000000'],
             'service_ids' => ['nullable', 'array'],
             'service_ids.*' => ['integer', Rule::exists('services', 'id')->whereNull('deleted_at')],
         ];
