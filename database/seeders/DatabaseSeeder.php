@@ -14,20 +14,25 @@ class DatabaseSeeder extends Seeder
     {
         $email = (string) env('ADMIN_EMAIL', 'admin@example.com');
         $password = env('ADMIN_PASSWORD');
+        $admin = User::query()->where('email', $email)->first();
 
-        if (! $password && app()->environment('production')) {
-            throw new RuntimeException('ADMIN_PASSWORD must be configured before production seeding.');
+        if ($admin && ! $admin->isAdmin()) {
+            throw new RuntimeException('ADMIN_EMAIL belongs to an existing non-admin user; seeding aborted.');
         }
 
-        $admin = User::query()->updateOrCreate(
-            ['email' => $email],
-            [
+        if (! $admin) {
+            if (! $password && app()->environment('production')) {
+                throw new RuntimeException('ADMIN_PASSWORD must be configured when bootstrapping the production admin account.');
+            }
+
+            $admin = User::query()->create([
+                'email' => $email,
                 'name' => (string) env('ADMIN_NAME', 'System Administrator'),
                 'password' => $password ?: 'ChangeMe!12345',
                 'role' => UserRole::Admin,
                 'is_active' => true,
-            ]
-        );
+            ]);
+        }
 
         $this->call(ServiceCatalogSeeder::class);
 

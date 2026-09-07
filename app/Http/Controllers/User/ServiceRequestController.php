@@ -50,6 +50,7 @@ class ServiceRequestController extends Controller
             'input_payload' => $input,
             'status' => 'pending',
         ]);
+
         try {
             $attempt = $dispatcher->dispatch($serviceRequest);
             $audit->write('request.created', $serviceRequest, ['attempt_id' => $attempt?->id, 'queued' => $attempt === null]);
@@ -105,13 +106,10 @@ class ServiceRequestController extends Controller
         $this->authorizeOwner($request);
         $this->assertCanReexecute($request);
         $input = $validator->validate($request->service, (array) $httpRequest->input('input', []));
-        $previousInput = $request->input_payload;
-        $previousStatus = $request->status;
-        $previousToken = $request->execution_token;
-        $request->update(['input_payload' => $input]);
 
         try {
-            $attempt = $dispatcher->dispatch($request->fresh(['service', 'user']));
+            $attempt = $dispatcher->dispatch($request->fresh(['service', 'user']), $input);
+            $request->refresh();
             $audit->write('request.updated_and_executed', $request, ['attempt_id' => $attempt?->id, 'queued' => $attempt === null]);
 
             if (! $attempt) {
@@ -122,11 +120,6 @@ class ServiceRequestController extends Controller
             return redirect()->route('requests.show', $request)->with($attempt->status->value === 'succeeded' ? 'success' : 'error', 'درخواست بروزرسانی و مجدداً اجرا شد.');
         } catch (Throwable $exception) {
             report($exception);
-            $request->update([
-                'input_payload' => $previousInput,
-                'status' => $previousStatus,
-                'execution_token' => $previousToken,
-            ]);
 
             return redirect()->route('requests.show', $request)->with('error', $exception->getMessage());
         }
@@ -136,10 +129,10 @@ class ServiceRequestController extends Controller
     {
         $this->authorizeOwner($request);
         $this->assertCanReexecute($request);
-        $previousStatus = $request->status;
-        $previousToken = $request->execution_token;
+
         try {
             $attempt = $dispatcher->dispatch($request->fresh(['service', 'user']));
+            $request->refresh();
             $audit->write('request.reexecuted', $request, ['attempt_id' => $attempt?->id, 'queued' => $attempt === null]);
 
             if (! $attempt) {
@@ -150,7 +143,6 @@ class ServiceRequestController extends Controller
             return redirect()->route('requests.show', $request)->with($attempt->status->value === 'succeeded' ? 'success' : 'error', 'درخواست مجدداً اجرا شد.');
         } catch (Throwable $exception) {
             report($exception);
-            $request->update(['status' => $previousStatus, 'execution_token' => $previousToken]);
 
             return redirect()->route('requests.show', $request)->with('error', $exception->getMessage());
         }
