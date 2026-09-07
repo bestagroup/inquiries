@@ -148,16 +148,35 @@ document.addEventListener('DOMContentLoaded', () => {
         outputBox.innerHTML = outputRows.length ? outputRows.map(outputRow).join('') : emptyState('output', 'خروجی مشخصی تعریف نشده است', 'در این حالت پاسخ کامل سرویس ذخیره خواهد شد.');
     };
 
-    document.getElementById('add-input').addEventListener('click', () => { inputRows.push({type: 'text', is_required: 1}); render(); inputBox.lastElementChild?.scrollIntoView({behavior: 'smooth', block: 'center'}); });
-    document.getElementById('add-output').addEventListener('click', () => { outputRows.push({type: 'text'}); render(); outputBox.lastElementChild?.scrollIntoView({behavior: 'smooth', block: 'center'}); });
+    const addRow = (box, template, defaults) => {
+        const existingRows = box.querySelectorAll('.field-builder-row');
+        if (!existingRows.length) box.innerHTML = '';
+        box.insertAdjacentHTML('beforeend', template(defaults, existingRows.length));
+        box.lastElementChild?.scrollIntoView({behavior: 'smooth', block: 'center'});
+    };
+
+    document.getElementById('add-input').addEventListener('click', () => addRow(inputBox, inputRow, {type: 'text', is_required: 1}));
+    document.getElementById('add-output').addEventListener('click', () => addRow(outputBox, outputRow, {type: 'text'}));
     document.addEventListener('click', event => {
         const button = event.target.closest('.remove-row');
         if (!button) return;
         const row = button.closest('.field-builder-row');
-        const list = row.dataset.kind === 'input' ? inputRows : outputRows;
         const box = row.dataset.kind === 'input' ? inputBox : outputBox;
-        list.splice([...box.querySelectorAll('.field-builder-row')].indexOf(row), 1);
-        render();
+        row.remove();
+
+        const remainingRows = [...box.querySelectorAll('.field-builder-row')];
+        remainingRows.forEach((fieldRow, index) => {
+            fieldRow.querySelector('.field-builder-row-head span').textContent = index + 1;
+            fieldRow.querySelectorAll('[name]').forEach(control => {
+                control.name = control.name.replace(/\[\d+\]/, `[${index}]`);
+            });
+        });
+
+        if (!remainingRows.length) {
+            box.innerHTML = box === inputBox
+                ? emptyState('input', 'هنوز ورودی تعریف نشده است', 'برای ساخت فرم استعلام، اولین ورودی را اضافه کنید.')
+                : emptyState('output', 'خروجی مشخصی تعریف نشده است', 'در این حالت پاسخ کامل سرویس ذخیره خواهد شد.');
+        }
     });
 
     const iconInput = document.getElementById('service-icon');
