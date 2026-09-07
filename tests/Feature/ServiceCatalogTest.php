@@ -45,6 +45,45 @@ class ServiceCatalogTest extends TestCase
             ->assertSee('سرویس‌های استعلام')
             ->assertSee('تطبیق موبایل و کدملی')
             ->assertSee('استعلام املاک')
-            ->assertSee('15 سرویس');
+            ->assertSee('service-search', false)
+            ->assertSee('سرویس در دسترس شماست');
+    }
+
+    public function test_admin_can_open_the_service_management_and_guided_editor_pages(): void
+    {
+        $this->withoutVite();
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.services.index'))
+            ->assertOk()
+            ->assertSee('تعریف سرویس جدید')
+            ->assertSee('کل سرویس‌ها');
+
+        $this->actingAs($admin)
+            ->get(route('admin.services.create'))
+            ->assertOk()
+            ->assertSee('مراحل تعریف سرویس')
+            ->assertSee('مشخصات اصلی')
+            ->assertSee('اتصال به API')
+            ->assertSee('افزودن ورودی');
+    }
+
+    public function test_user_can_open_the_clear_service_execution_form(): void
+    {
+        $this->withoutVite();
+        $this->seed(ServiceCatalogSeeder::class);
+        $user = User::factory()->create();
+        $service = RemoteService::query()->where('slug', 'mobile-national-id-match')->firstOrFail();
+        $user->services()->attach($service, ['is_active' => true, 'assigned_at' => now()]);
+
+        $this->actingAs($user)
+            ->get(route('services.show', $service))
+            ->assertOk()
+            ->assertSee('اطلاعات مورد نیاز')
+            ->assertSee('شماره موبایل')
+            ->assertSee('ثبت و اجرای استعلام')
+            ->assertSee('ارسال امن اطلاعات');
     }
 }

@@ -21,7 +21,7 @@ class ServiceController extends Controller
     {
         if (request()->ajax()) {
             $query = RemoteService::query()
-                ->select(['id', 'name', 'slug', 'http_method', 'is_active', 'created_at'])
+                ->select(['id', 'name', 'slug', 'category', 'icon', 'http_method', 'is_active', 'created_at'])
                 ->withCount([
                     'users as active_users_count' => fn ($query) => $query->where('service_user.is_active', true),
                 ]);
@@ -34,7 +34,14 @@ class ServiceController extends Controller
                 ->toJson();
         }
 
-        return view('admin.services.index');
+        return view('admin.services.index', [
+            'summary' => [
+                'total' => RemoteService::query()->count(),
+                'active' => RemoteService::query()->where('is_active', true)->count(),
+                'inactive' => RemoteService::query()->where('is_active', false)->count(),
+                'categories' => RemoteService::query()->whereNotNull('category')->distinct()->count('category'),
+            ],
+        ]);
     }
 
     public function create(): View

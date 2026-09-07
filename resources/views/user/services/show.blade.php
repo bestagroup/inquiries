@@ -1,5 +1,97 @@
 @extends('layouts.base')
-@section('title',$service->name)@section('page-title',$service->name)
+@section('title', $service->name)
+@section('page-title', $service->name)
+
 @section('content')
-<div class="row g-3"><div class="col-xl-8"><div class="card"><div class="card-header"><strong>ثبت درخواست جدید</strong></div><div class="card-body"><p class="text-muted">{{ $service->description }}</p><form method="POST" action="{{ route('requests.store',$service) }}">@csrf<div class="row g-3">@foreach($service->inputFields as $field)<div class="col-md-6"><label class="form-label">{{ $field->label }} @if($field->is_required)<span class="text-danger">*</span>@endif</label>@if($field->type->value==='select')<select class="form-select" name="input[{{ $field->key }}]" @required($field->is_required)><option value="">انتخاب کنید</option>@foreach((array)$field->options as $option)<option value="{{ $option }}" @selected(old('input.'.$field->key)===$option)>{{ $option }}</option>@endforeach</select>@elseif($field->type->value==='boolean')<select class="form-select" name="input[{{ $field->key }}]" @required($field->is_required)><option value="" @selected(old('input.'.$field->key)===null)>انتخاب کنید</option><option value="1" @selected((string)old('input.'.$field->key)==='1')>بله</option><option value="0" @selected((string)old('input.'.$field->key)==='0')>خیر</option></select>@else<input class="form-control" type="{{ $field->is_sensitive?'password':($field->type->value==='number'?'number':($field->type->value==='date'?'date':'text')) }}" name="input[{{ $field->key }}]" value="{{ $field->is_sensitive?'':old('input.'.$field->key,$field->default_value) }}" @if($field->type->value==='number') step="any" @endif @if($field->is_sensitive) autocomplete="new-password" @endif @required($field->is_required)></div>@endif @if($field->type->value==='select' || $field->type->value==='boolean')</div>@endif @endforeach</div><button class="btn btn-primary mt-4"><i class="bi bi-send"></i> ارسال استعلام</button></form></div></div></div><div class="col-xl-4"><div class="card"><div class="card-header"><strong>مشخصات سرویس</strong></div><div class="card-body small"><dl class="row mb-0"><dt class="col-5">Method</dt><dd class="col-7">{{ $service->http_method->value }}</dd><dt class="col-5">نوع ارسال</dt><dd class="col-7">{{ $service->payload_mode->value }}</dd><dt class="col-5">فرمت پاسخ</dt><dd class="col-7">{{ $service->response_format->value }}</dd><dt class="col-5">Timeout</dt><dd class="col-7">{{ $service->timeout_seconds }} ثانیه</dd></dl></div></div></div></div>
+<div class="service-run-page">
+    <header class="page-heading service-run-heading">
+        <div>
+            <a class="page-back-link" href="{{ route('services.index') }}"><i class="bi bi-arrow-right"></i> بازگشت به سرویس‌ها</a>
+            <div class="service-run-title">
+                <span><i class="bi {{ $service->icon ?: 'bi-hdd-network' }}"></i></span>
+                <div>
+                    <div class="service-run-meta">{{ $service->category ?: 'سرویس استعلام' }} <i></i> فعال</div>
+                    <h1>{{ $service->name }}</h1>
+                </div>
+            </div>
+            <p>{{ $service->description }}</p>
+        </div>
+    </header>
+
+    <div class="service-run-layout">
+        <section class="service-run-form">
+            <div class="service-run-section-heading">
+                <div><span>۱</span><div><h2>اطلاعات مورد نیاز</h2><p>موارد زیر را با دقت و مطابق مدارک رسمی وارد کنید.</p></div></div>
+                <small><b>*</b> فیلد اجباری</small>
+            </div>
+
+            <form method="POST" action="{{ route('requests.store', $service) }}">
+                @csrf
+                <div class="row g-3">
+                    @forelse($service->inputFields as $field)
+                        @php
+                            $hasDigitsRule = collect((array) $field->validation_rules)->contains(fn ($rule) => str_starts_with($rule, 'digits'));
+                            $fieldId = 'service-input-'.$field->id;
+                        @endphp
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ $fieldId }}">{{ $field->label }} @if($field->is_required)<b>*</b>@endif</label>
+                            @if($field->type->value === 'select')
+                                <select class="form-select @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" name="input[{{ $field->key }}]" @required($field->is_required)>
+                                    <option value="">انتخاب کنید</option>
+                                    @foreach((array) $field->options as $option)<option value="{{ $option }}" @selected(old('input.'.$field->key) === $option)>{{ $option }}</option>@endforeach
+                                </select>
+                            @elseif($field->type->value === 'boolean')
+                                <select class="form-select @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" name="input[{{ $field->key }}]" @required($field->is_required)>
+                                    <option value="">انتخاب کنید</option><option value="1" @selected((string) old('input.'.$field->key) === '1')>بله</option><option value="0" @selected((string) old('input.'.$field->key) === '0')>خیر</option>
+                                </select>
+                            @elseif($field->is_sensitive)
+                                <div class="sensitive-input">
+                                    <input class="form-control @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" type="password" name="input[{{ $field->key }}]" inputmode="{{ $hasDigitsRule ? 'numeric' : 'text' }}" autocomplete="off" @required($field->is_required)>
+                                    <button type="button" data-password-toggle="{{ $fieldId }}" aria-label="نمایش مقدار"><i class="bi bi-eye"></i></button>
+                                </div>
+                            @else
+                                <input class="form-control @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" type="{{ $field->type->value === 'number' ? 'number' : ($field->type->value === 'date' ? 'date' : 'text') }}" name="input[{{ $field->key }}]" value="{{ old('input.'.$field->key, $field->default_value) }}" @if($field->type->value === 'number') step="any" @endif @required($field->is_required)>
+                            @endif
+                            @error($field->key)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                    @empty
+                        <div class="col-12"><div class="service-no-input"><i class="bi bi-info-circle"></i> این سرویس به اطلاعات ورودی نیاز ندارد.</div></div>
+                    @endforelse
+                </div>
+
+                <div class="service-run-submit">
+                    <div><i class="bi bi-shield-check"></i><span><strong>ارسال امن اطلاعات</strong><small>اطلاعات درخواست به‌صورت رمزنگاری‌شده نگهداری می‌شود.</small></span></div>
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> ثبت و اجرای استعلام</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="service-run-sidebar">
+            <div class="service-info-card">
+                <h2>مشخصات سرویس</h2>
+                <dl>
+                    <div><dt>وضعیت</dt><dd class="text-success"><i class="bi bi-circle-fill"></i> فعال</dd></div>
+                    <div><dt>تعداد ورودی</dt><dd>{{ $service->inputFields->count() }} مورد</dd></div>
+                    <div><dt>مهلت پاسخ</dt><dd>تا {{ $service->timeout_seconds }} ثانیه</dd></div>
+                    <div><dt>کد سرویس</dt><dd><code>{{ $service->slug }}</code></dd></div>
+                </dl>
+            </div>
+            <div class="service-help-card"><i class="bi bi-headset"></i><div><strong>نیاز به راهنمایی دارید؟</strong><p>در صورت ابهام درباره اطلاعات ورودی، پیش از ثبت درخواست با مدیر سامانه در ارتباط باشید.</p></div></div>
+        </aside>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('click', event => {
+    const button = event.target.closest('[data-password-toggle]');
+    if (!button) return;
+    const input = document.getElementById(button.dataset.passwordToggle);
+    const reveal = input.type === 'password';
+    input.type = reveal ? 'text' : 'password';
+    button.setAttribute('aria-label', reveal ? 'مخفی‌کردن مقدار' : 'نمایش مقدار');
+    button.querySelector('i').className = `bi ${reveal ? 'bi-eye-slash' : 'bi-eye'}`;
+});
+</script>
+@endpush

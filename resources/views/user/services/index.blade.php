@@ -4,74 +4,134 @@
 
 @section('content')
 @php
-    $categoryCount = $services->pluck('category')->filter()->unique()->count();
+    $categories = $services->pluck('category')->filter()->unique()->sort()->values();
 @endphp
-<div class="services-page">
-    <div class="services-orb services-orb-primary" aria-hidden="true"></div>
-    <div class="services-orb services-orb-secondary" aria-hidden="true"></div>
-
-    <section class="services-hero" aria-labelledby="services-title">
-        <div class="services-hero-copy">
-            <span class="services-eyebrow"><i class="bi bi-stars"></i> مرکز خدمات سازمانی</span>
-            <h1 id="services-title">سرویس‌های استعلام</h1>
-            <p>دسترسی سریع، امن و یکپارچه به سرویس‌های استعلامی مورد نیاز کسب‌وکار شما</p>
+<div class="service-catalog">
+    <header class="page-heading">
+        <div>
+            <span class="page-kicker">مرکز خدمات سازمانی</span>
+            <h1>سرویس‌های استعلام</h1>
+            <p>سرویس مورد نیاز را پیدا کنید و استعلام جدید را در چند مرحله کوتاه ثبت کنید.</p>
         </div>
-        <div class="services-stats" aria-label="آمار سرویس‌ها">
-            <div class="service-stat">
-                <span class="service-stat-icon service-stat-icon-primary"><i class="bi bi-grid"></i></span>
-                <div><strong>{{ number_format($services->count()) }}</strong><span>سرویس فعال</span></div>
+        @if(auth()->user()->isAdmin())
+            <div class="page-heading-actions">
+                <a class="btn btn-outline-secondary" href="{{ route('admin.services.index') }}"><i class="bi bi-sliders"></i> مدیریت سرویس‌ها</a>
+                <a class="btn btn-primary" href="{{ route('admin.services.create') }}"><i class="bi bi-plus-lg"></i> تعریف سرویس</a>
             </div>
-            <div class="service-stat">
-                <span class="service-stat-icon service-stat-icon-success"><i class="bi bi-broadcast-pin"></i></span>
-                <div><strong>فعال</strong><span>وضعیت سرویس‌ها</span></div>
-            </div>
-            <div class="service-stat">
-                <span class="service-stat-icon service-stat-icon-violet"><i class="bi bi-collection"></i></span>
-                <div><strong>{{ number_format($categoryCount) }}</strong><span>دسته‌بندی</span></div>
-            </div>
+        @endif
+    </header>
+
+    <section class="catalog-toolbar" aria-label="جست‌وجو و فیلتر سرویس‌ها">
+        <label class="catalog-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <span class="visually-hidden">جست‌وجوی سرویس</span>
+            <input type="search" id="service-search" placeholder="جست‌وجو در نام یا توضیحات سرویس…" autocomplete="off">
+        </label>
+        <div class="catalog-filters" role="group" aria-label="دسته‌بندی سرویس‌ها">
+            <button type="button" class="catalog-filter active" data-category="all" aria-pressed="true">همه <span>{{ $services->count() }}</span></button>
+            @foreach($categories as $category)
+                <button type="button" class="catalog-filter" data-category="{{ $category }}" aria-pressed="false">{{ $category }}</button>
+            @endforeach
         </div>
     </section>
 
-    <div class="services-section-heading">
-        <div>
-            <h2>سرویس‌های در دسترس شما</h2>
-            <p>برای ثبت و پیگیری یک استعلام، سرویس مورد نظر را انتخاب کنید.</p>
-        </div>
-        <span class="services-count">{{ number_format($services->count()) }} سرویس</span>
+    <div class="catalog-result-bar">
+        <div><strong id="visible-service-count">{{ $services->count() }}</strong> سرویس در دسترس شماست</div>
+        <div class="catalog-api-state"><span></span> آماده دریافت درخواست</div>
     </div>
 
-    <div class="row g-4 services-grid">
+    <div class="row g-3 service-card-grid" id="service-grid">
         @forelse($services as $service)
-            <div class="col-md-6 col-xl-4">
-                <article class="service-glass-card h-100">
-                    <div class="service-card-top">
-                        <span class="service-card-icon"><i class="bi {{ $service->icon ?: 'bi-hdd-network' }}"></i></span>
-                        <span class="service-status"><i class="bi bi-check-circle-fill"></i> فعال</span>
+            <div class="col-sm-6 col-xl-4 service-card-column"
+                 data-category="{{ $service->category }}"
+                 data-search="{{ $service->name }} {{ $service->description }} {{ $service->slug }}">
+                <article class="catalog-service-card h-100">
+                    <div class="catalog-service-main">
+                        <span class="catalog-service-icon" aria-hidden="true"><i class="bi {{ $service->icon ?: 'bi-hdd-network' }}"></i></span>
+                        <div class="catalog-service-title">
+                            <div class="catalog-service-meta">
+                                @if($service->category)<span>{{ $service->category }}</span>@endif
+                                <span class="catalog-status"><i class="bi bi-circle-fill"></i> فعال</span>
+                            </div>
+                            <h2>{{ $service->name }}</h2>
+                        </div>
                     </div>
-                    <div class="service-card-content">
-                        @if($service->category)
-                            <span class="service-category">{{ $service->category }}</span>
-                        @endif
-                        <h3>{{ $service->name }}</h3>
-                        <p>{{ \Illuminate\Support\Str::limit((string) $service->description, 135) }}</p>
-                    </div>
-                    <div class="service-card-footer">
-                        <span class="service-input-count"><i class="bi bi-input-cursor-text"></i> {{ number_format($service->inputFields->count()) }} ورودی</span>
-                        <a href="{{ route('services.show', $service) }}" aria-label="مشاهده سرویس {{ $service->name }}">
-                            مشاهده سرویس <i class="bi bi-arrow-left"></i>
+                    <p>{{ \Illuminate\Support\Str::limit((string) $service->description, 145) }}</p>
+                    <footer>
+                        <span><i class="bi bi-input-cursor-text"></i> {{ $service->inputFields->count() }} ورودی</span>
+                        <a href="{{ route('services.show', $service) }}" aria-label="شروع {{ $service->name }}">
+                            شروع استعلام <i class="bi bi-arrow-left"></i>
                         </a>
-                    </div>
+                    </footer>
                 </article>
             </div>
         @empty
             <div class="col-12">
-                <div class="services-empty">
-                    <span><i class="bi bi-grid"></i></span>
-                    <h2>هنوز سرویسی در دسترس شما نیست</h2>
-                    <p>برای فعال‌سازی سرویس‌های مورد نیاز با مدیر سامانه در ارتباط باشید.</p>
+                <div class="catalog-empty">
+                    <i class="bi bi-inboxes"></i>
+                    <h2>سرویسی برای حساب شما فعال نشده است</h2>
+                    <p>برای دریافت دسترسی با مدیر سامانه در ارتباط باشید.</p>
                 </div>
             </div>
         @endforelse
     </div>
+
+    @if($services->isNotEmpty())
+        <div class="catalog-empty d-none" id="service-no-results">
+            <i class="bi bi-search"></i>
+            <h2>سرویسی با این مشخصات پیدا نشد</h2>
+            <p>عبارت جست‌وجو یا دسته‌بندی انتخاب‌شده را تغییر دهید.</p>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="service-filter-reset">پاک‌کردن فیلترها</button>
+        </div>
+    @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const search = document.getElementById('service-search');
+    if (!search) return;
+
+    const cards = [...document.querySelectorAll('.service-card-column')];
+    const filters = [...document.querySelectorAll('.catalog-filter')];
+    const empty = document.getElementById('service-no-results');
+    const count = document.getElementById('visible-service-count');
+    let selectedCategory = 'all';
+
+    const normalize = value => String(value ?? '').trim().toLocaleLowerCase('fa');
+    const applyFilters = () => {
+        const term = normalize(search.value);
+        let visible = 0;
+
+        cards.forEach(card => {
+            const matchesCategory = selectedCategory === 'all' || card.dataset.category === selectedCategory;
+            const matchesSearch = !term || normalize(card.dataset.search).includes(term);
+            const show = matchesCategory && matchesSearch;
+            card.classList.toggle('d-none', !show);
+            if (show) visible++;
+        });
+
+        count.textContent = visible.toLocaleString('fa-IR');
+        empty?.classList.toggle('d-none', visible !== 0);
+    };
+
+    filters.forEach(filter => filter.addEventListener('click', () => {
+        selectedCategory = filter.dataset.category;
+        filters.forEach(item => {
+            const active = item === filter;
+            item.classList.toggle('active', active);
+            item.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        applyFilters();
+    }));
+
+    search.addEventListener('input', applyFilters);
+    document.getElementById('service-filter-reset')?.addEventListener('click', () => {
+        search.value = '';
+        filters[0]?.click();
+        search.focus();
+    });
+});
+</script>
+@endpush
