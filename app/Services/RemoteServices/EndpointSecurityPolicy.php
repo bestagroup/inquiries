@@ -25,6 +25,10 @@ class EndpointSecurityPolicy
         }
 
         $allowedHosts = config('remote_services.allowed_hosts', []);
+        if (app()->environment('production') && $allowedHosts === []) {
+            throw new InvalidArgumentException('فهرست دامنه‌های مجاز سرویس‌ها در محیط Production پیکربندی نشده است.');
+        }
+
         if ($allowedHosts !== [] && ! $this->matchesAllowList($host, $allowedHosts)) {
             throw new InvalidArgumentException('دامنه مقصد در فهرست مجاز سرویس‌ها نیست.');
         }

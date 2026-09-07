@@ -17,6 +17,9 @@ class Handler extends ExceptionHandler
         'current_password',
         'password',
         'password_confirmation',
+        'service_token',
+        'headers_json',
+        'input',
     ];
 
     public function register(): void
@@ -42,8 +45,14 @@ class Handler extends ExceptionHandler
             $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
             $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
             $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+            $response->headers->set('Content-Security-Policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'");
             $response->headers->remove('X-Powered-By');
             header_remove('X-Powered-By');
+
+            if ($request->user() !== null) {
+                $response->headers->set('Cache-Control', 'no-store, private');
+                $response->headers->set('Pragma', 'no-cache');
+            }
 
             if ($request->isSecure()) {
                 $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
