@@ -20,10 +20,21 @@ class SaveServiceRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $normalized = [
             'is_active' => $this->boolean('is_active'),
             'allow_resubmit' => $this->boolean('allow_resubmit'),
-        ]);
+        ];
+
+        // An empty dynamic field list has no browser inputs. Preserve that deliberate empty state
+        // so a validation redirect does not repopulate the list from the database.
+        if ($this->exists('inputs_present')) {
+            $normalized['inputs'] = $this->input('inputs', []);
+        }
+        if ($this->exists('outputs_present')) {
+            $normalized['outputs'] = $this->input('outputs', []);
+        }
+
+        $this->merge($normalized);
     }
 
     public function rules(): array
@@ -128,5 +139,40 @@ class SaveServiceRequest extends FormRequest
                 }
             }
         }];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'عنوان فارسی سرویس را وارد کنید.',
+            'slug.required' => 'کد یکتای سرویس را وارد کنید.',
+            'slug.alpha_dash' => 'کد سرویس فقط می‌تواند شامل حروف انگلیسی، عدد، خط تیره و زیرخط باشد.',
+            'slug.unique' => 'این کد سرویس قبلاً استفاده شده است؛ یک کد یکتای دیگر وارد کنید.',
+            'endpoint_url.required' => 'نشانی Endpoint سرویس را وارد کنید.',
+            'endpoint_url.url' => 'نشانی Endpoint باید یک آدرس کامل و معتبر با http یا https باشد.',
+            'headers_json.json' => 'هدرهای اختصاصی باید به‌صورت JSON معتبر وارد شوند؛ برای حالت خالی از {} استفاده کنید.',
+            'inputs.*.label.required' => 'عنوان نمایشی ورودی شماره :position را وارد کنید.',
+            'inputs.*.key.required' => 'کلید API ورودی شماره :position را وارد کنید.',
+            'inputs.*.key.distinct' => 'کلید API ورودی شماره :position تکراری است.',
+            'inputs.*.key.regex' => 'کلید API ورودی شماره :position باید با حرف انگلیسی یا زیرخط شروع شود و فاصله نداشته باشد.',
+            'inputs.*.type.required' => 'نوع ورودی شماره :position را انتخاب کنید.',
+            'outputs.*.label.required' => 'عنوان نمایشی خروجی شماره :position را وارد کنید.',
+            'outputs.*.key.required' => 'کلید داخلی خروجی شماره :position را وارد کنید.',
+            'outputs.*.key.distinct' => 'کلید داخلی خروجی شماره :position تکراری است.',
+            'outputs.*.key.regex' => 'کلید داخلی خروجی شماره :position باید با حرف انگلیسی یا زیرخط شروع شود و فاصله نداشته باشد.',
+            'outputs.*.type.required' => 'نوع خروجی شماره :position را انتخاب کنید.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'timeout_seconds' => 'مهلت پاسخ',
+            'connect_timeout_seconds' => 'مهلت اتصال',
+            'retry_times' => 'تعداد تلاش مجدد',
+            'retry_delay_ms' => 'فاصله تلاش‌ها',
+            'rate_limit_per_minute' => 'محدودیت درخواست در دقیقه',
+            'sort_order' => 'ترتیب نمایش',
+        ];
     }
 }

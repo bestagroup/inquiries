@@ -111,6 +111,11 @@ a { text-decoration:none; }
 /* Service editor */
 .service-editor { max-width:1500px; margin:0 auto; }
 .service-editor-heading { align-items:center; }
+.service-editor-notice { display:flex; align-items:flex-start; gap:.7rem; margin-bottom:1rem; padding:.85rem 1rem; border:1px solid #dfe0fb; border-radius:.8rem; background:#f7f7ff; color:#5b5ed3; }
+.service-editor-notice > i { flex:none; margin-top:.1rem; }
+.service-editor-notice strong,.service-editor-notice span { display:block; }
+.service-editor-notice strong { color:#46485f; font-size:.74rem; }
+.service-editor-notice span { margin-top:.18rem; color:#737588; font-size:.67rem; line-height:1.8; }
 .service-editor-layout { display:grid; grid-template-columns:235px minmax(0,1fr); align-items:start; gap:1rem; }
 .service-editor-nav { position:sticky; top:88px; padding:.8rem; border:1px solid var(--line); border-radius:1rem; background:#fff; }
 .service-editor-nav-title { padding:.25rem .55rem .65rem; color:#9697a3; font-size:.68rem; font-weight:800; }

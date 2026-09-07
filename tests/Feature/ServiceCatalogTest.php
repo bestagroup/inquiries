@@ -86,4 +86,77 @@ class ServiceCatalogTest extends TestCase
             ->assertSee('ثبت و اجرای استعلام')
             ->assertSee('ارسال امن اطلاعات');
     }
+
+    public function test_invalid_service_form_keeps_deliberately_empty_field_lists(): void
+    {
+        $this->withoutVite();
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+
+        $response = $this->actingAs($admin)
+            ->from(route('admin.services.edit', $service))
+            ->put(route('admin.services.update', $service), $this->servicePayload($service, ['name' => '']));
+
+        $response->assertRedirect(route('admin.services.edit', $service))->assertSessionHasErrors('name');
+
+        $this->get(route('admin.services.edit', $service))
+            ->assertOk()
+            ->assertSee('عنوان فارسی سرویس را وارد کنید.')
+            ->assertSee('هنوز ورودی تعریف نشده است');
+    }
+
+    public function test_dynamic_service_fields_have_clear_validation_messages_and_keep_input(): void
+    {
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+        $payload = $this->servicePayload($service, [
+            'inputs' => [[
+                'label' => '', 'key' => '', 'type' => 'text', 'validation_rules' => '',
+                'default_value' => '', 'options' => '', 'is_required' => 1, 'is_sensitive' => 0,
+            ]],
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('admin.services.update', $service), $payload);
+
+        $response
+            ->assertSessionHasErrors([
+                'inputs.0.label' => 'عنوان نمایشی ورودی شماره 1 را وارد کنید.',
+                'inputs.0.key' => 'کلید API ورودی شماره 1 را وارد کنید.',
+            ]);
+
+        $this->get(route('admin.services.edit', $service))
+            ->assertOk()
+            ->assertSee('عنوان نمایشی ورودی شماره 1 را وارد کنید.')
+            ->assertSee('کلید API ورودی شماره 1 را وارد کنید.');
+    }
+
+    private function servicePayload(RemoteService $service, array $overrides = []): array
+    {
+        return array_replace([
+            'name' => $service->name,
+            'slug' => $service->slug,
+            'description' => $service->description,
+            'category' => $service->category,
+            'icon' => $service->icon,
+            'endpoint_url' => $service->endpoint_url,
+            'http_method' => $service->http_method->value,
+            'payload_mode' => $service->payload_mode->value,
+            'response_format' => $service->response_format->value,
+            'headers_json' => '{}',
+            'timeout_seconds' => $service->timeout_seconds,
+            'connect_timeout_seconds' => $service->connect_timeout_seconds,
+            'retry_times' => $service->retry_times,
+            'retry_delay_ms' => $service->retry_delay_ms,
+            'rate_limit_per_minute' => $service->rate_limit_per_minute,
+            'allow_resubmit' => (int) $service->allow_resubmit,
+            'is_active' => (int) $service->is_active,
+            'sort_order' => $service->sort_order,
+            'inputs_present' => 1,
+            'outputs_present' => 1,
+        ], $overrides);
+    }
 }
