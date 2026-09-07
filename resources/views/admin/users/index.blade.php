@@ -1,6 +1,40 @@
 @extends('layouts.base')
-@section('title','مدیریت کاربران')@section('page-title','مدیریت کاربران')
+@section('title','مدیریت کاربران')
+@section('page-title','مدیریت کاربران')
 @section('content')
-<div class="card"><div class="card-header d-flex justify-content-between"><div><h5 class="mb-1">کاربران</h5><div class="text-muted small">تعریف کاربر و تخصیص سرویس‌های مجاز</div></div><a class="btn btn-primary" href="{{ route('admin.users.create') }}"><i class="bi bi-plus-lg"></i> کاربر جدید</a></div><div class="card-body"><div class="table-responsive"><table id="users-table" class="table table-striped align-middle w-100"><thead><tr><th>نام</th><th>ایمیل</th><th>موبایل</th><th>سرویس‌ها</th><th>وضعیت</th><th>عملیات</th></tr></thead></table></div></div></div>
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <div><h5 class="mb-1">کاربران</h5><div class="text-muted small">تعریف کاربر، تخصیص سرویس و مدیریت کیف پول</div></div>
+        <a class="btn btn-primary" href="{{ route('admin.users.create') }}"><i class="bi bi-plus-lg"></i> کاربر جدید</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="users-table" class="table table-striped align-middle w-100">
+                <thead><tr><th>نام</th><th>ایمیل</th><th>موبایل</th><th>سرویس‌ها</th><th>موجودی کیف پول</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            </table>
+        </div>
+    </div>
+</div>
 @endsection
-@push('scripts')<script>document.addEventListener('DOMContentLoaded',()=>{new DataTable('#users-table',{processing:true,serverSide:true,ajax:@json(route('admin.users.index')),order:[[0,'asc']],columns:[{data:'name',name:'name'},{data:'email',name:'email'},{data:'phone',name:'phone',defaultContent:'-'},{data:'active_services_count',name:'active_services_count',searchable:false},{data:'is_active',name:'is_active'},{data:'action',orderable:false,searchable:false}],language:{search:'جستجو:',lengthMenu:'نمایش _MENU_ رکورد',info:'نمایش _START_ تا _END_ از _TOTAL_',infoEmpty:'رکوردی وجود ندارد',zeroRecords:'نتیجه‌ای یافت نشد',paginate:{first:'اول',last:'آخر',next:'بعدی',previous:'قبلی'}}});});</script>@endpush
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+    new DataTable('#users-table',{
+        processing:true,
+        serverSide:true,
+        ajax:@json(route('admin.users.index')),
+        order:[[0,'asc']],
+        columns:[
+            {data:'name',name:'name'},
+            {data:'email',name:'email'},
+            {data:'phone',name:'phone',defaultContent:'-'},
+            {data:'active_services_count',name:'active_services_count',searchable:false},
+            {data:'wallet_balance',name:'wallet_balance',orderable:false,searchable:false},
+            {data:'is_active',name:'is_active'},
+            {data:'action',orderable:false,searchable:false}
+        ],
+        language:{search:'جستجو:',lengthMenu:'نمایش _MENU_ رکورد',info:'نمایش _START_ تا _END_ از _TOTAL_',infoEmpty:'رکوردی وجود ندارد',zeroRecords:'نتیجه‌ای یافت نشد',paginate:{first:'اول',last:'آخر',next:'بعدی',previous:'قبلی'}}
+    });
+});
+</script>
+@endpush

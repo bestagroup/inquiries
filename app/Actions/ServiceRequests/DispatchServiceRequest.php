@@ -6,6 +6,7 @@ use App\Enums\ServiceRequestStatus;
 use App\Jobs\ExecuteRemoteServiceRequest;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttempt;
+use App\Services\Billing\WalletService;
 use App\Services\RemoteServices\ServiceRequestRateLimiter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -17,6 +18,7 @@ class DispatchServiceRequest
     public function __construct(
         private readonly ExecuteServiceRequest $executor,
         private readonly ServiceRequestRateLimiter $rateLimiter,
+        private readonly WalletService $wallets,
     ) {}
 
     public function dispatch(ServiceRequest $serviceRequest, ?array $inputPayload = null): ?ServiceRequestAttempt
@@ -64,7 +66,9 @@ class DispatchServiceRequest
                 throw new RuntimeException('این درخواست در حال پردازش است و اجرای هم‌زمان مجاز نیست.');
             }
 
+            $locked->loadMissing(['service', 'user']);
             $this->rateLimiter->consume($locked);
+            $this->wallets->reserveForExecution($locked, $token);
 
             $values = [
                 'status' => ServiceRequestStatus::Pending,
@@ -84,6 +88,8 @@ class DispatchServiceRequest
 
     private function markLeaseAsFailed(ServiceRequest $serviceRequest, string $token, Throwable $exception): void
     {
+        $this->wallets->release($token);
+
         ServiceRequest::query()
             ->whereKey($serviceRequest->getKey())
             ->where('execution_token', $token)

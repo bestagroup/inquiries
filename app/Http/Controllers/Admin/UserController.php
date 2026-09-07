@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\RemoteService;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Billing\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +24,14 @@ class UserController extends Controller
             $query = User::query()
                 ->select(['id', 'name', 'email', 'phone', 'is_active', 'created_at'])
                 ->where('role', UserRole::User->value)
+                ->with('wallet:id,user_id,balance,reserved_balance')
                 ->withCount([
                     'services as active_services_count' => fn ($query) => $query->where('service_user.is_active', true),
                 ]);
 
             return DataTables::eloquent($query)
                 ->editColumn('is_active', fn (User $user) => $user->is_active ? 'فعال' : 'غیرفعال')
+                ->addColumn('wallet_balance', fn (User $user) => number_format((int) ($user->wallet?->balance ?? 0)).' '.config('billing.currency_label'))
                 ->addColumn('action', fn (User $user) => view('admin.users._actions', compact('user'))->render())
                 ->rawColumns(['action'])
                 ->toJson();
@@ -44,10 +47,13 @@ class UserController extends Controller
         return view('admin.users.form', ['user' => new User, 'services' => $services, 'selectedServices' => []]);
     }
 
-    public function store(StoreUserRequest $request, AuditLogger $audit): RedirectResponse
+    public function store(StoreUserRequest $request, AuditLogger $audit, WalletService $wallets): RedirectResponse
     {
         $validated = $request->validated();
-        $user = DB::transaction(function () use ($validated): User {
+        $actor = $request->user();
+        $walletBalance = (int) ($validated['wallet_balance'] ?? 0);
+
+        $user = DB::transaction(function () use ($validated, $wallets, $actor, $walletBalance): User {
             $user = User::query()->create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -57,10 +63,15 @@ class UserController extends Controller
                 'is_active' => $validated['is_active'] ?? true,
             ]);
             $this->syncServices($user, $validated['service_ids'] ?? []);
+            $wallets->setBalance($user, $walletBalance, $actor, 'تعیین موجودی اولیه کاربر');
 
             return $user;
-        });
-        $audit->write('user.created', $user, ['service_ids' => $validated['service_ids'] ?? []]);
+        }, 3);
+
+        $audit->write('user.created', $user, [
+            'service_ids' => $validated['service_ids'] ?? [],
+            'wallet_balance' => $walletBalance,
+        ]);
 
         return redirect()->route('admin.users.index')->with('success', 'کاربر با موفقیت ایجاد شد.');
     }
@@ -68,28 +79,44 @@ class UserController extends Controller
     public function edit(User $user): View
     {
         abort_if($user->isAdmin(), 404);
+        $user->load('wallet');
         $services = RemoteService::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'is_active']);
         $selectedServices = $user->services()->pluck('services.id')->all();
 
         return view('admin.users.form', compact('user', 'services', 'selectedServices'));
     }
 
-    public function update(UpdateUserRequest $request, User $user, AuditLogger $audit): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user, AuditLogger $audit, WalletService $wallets): RedirectResponse
     {
         abort_if($user->isAdmin(), 404);
         $validated = $request->validated();
-        DB::transaction(function () use ($user, $validated): void {
+        $actor = $request->user();
+        $walletBalanceProvided = array_key_exists('wallet_balance', $validated) && $validated['wallet_balance'] !== null;
+
+        DB::transaction(function () use ($user, $validated, $wallets, $actor, $walletBalanceProvided): void {
             $payload = [
-                'name' => $validated['name'], 'email' => $validated['email'], 'phone' => $validated['phone'] ?? null,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
                 'is_active' => $validated['is_active'],
             ];
             if (! empty($validated['password'])) {
                 $payload['password'] = $validated['password'];
             }
+
             $user->update($payload);
             $this->syncServices($user, $validated['service_ids'] ?? []);
-        });
-        $audit->write('user.updated', $user, ['service_ids' => $validated['service_ids'] ?? []]);
+
+            if ($walletBalanceProvided) {
+                $wallets->setBalance($user, (int) $validated['wallet_balance'], $actor);
+            }
+        }, 3);
+
+        $auditMetadata = ['service_ids' => $validated['service_ids'] ?? []];
+        if ($walletBalanceProvided) {
+            $auditMetadata['wallet_balance'] = (int) $validated['wallet_balance'];
+        }
+        $audit->write('user.updated', $user, $auditMetadata);
 
         return redirect()->route('admin.users.index')->with('success', 'اطلاعات کاربر بروزرسانی شد.');
     }

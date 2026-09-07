@@ -11,7 +11,7 @@ class ServiceRequestAttempt extends Model
     protected $fillable = [
         'service_request_id', 'sequence', 'status', 'endpoint_url', 'http_method',
         'request_payload', 'response_payload', 'mapped_response', 'response_raw', 'http_status', 'duration_ms',
-        'error_code', 'error_message', 'started_at', 'completed_at',
+        'price_amount', 'error_code', 'error_message', 'started_at', 'completed_at',
     ];
 
     protected $hidden = ['request_payload', 'response_payload', 'mapped_response', 'response_raw'];
@@ -22,6 +22,7 @@ class ServiceRequestAttempt extends Model
         'response_payload' => 'encrypted:array',
         'mapped_response' => 'encrypted:array',
         'response_raw' => 'encrypted',
+        'price_amount' => 'integer',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];

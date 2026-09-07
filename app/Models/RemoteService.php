@@ -20,7 +20,7 @@ class RemoteService extends Model
     protected $fillable = [
         'name', 'slug', 'description', 'category', 'icon', 'endpoint_url', 'http_method', 'payload_mode',
         'response_format', 'headers', 'timeout_seconds', 'connect_timeout_seconds',
-        'retry_times', 'retry_delay_ms', 'rate_limit_per_minute', 'allow_resubmit',
+        'retry_times', 'retry_delay_ms', 'rate_limit_per_minute', 'price_amount', 'allow_resubmit',
         'is_active', 'sort_order',
     ];
 
@@ -31,6 +31,7 @@ class RemoteService extends Model
         'payload_mode' => PayloadMode::class,
         'response_format' => ResponseFormat::class,
         'headers' => 'encrypted:array',
+        'price_amount' => 'integer',
         'allow_resubmit' => 'boolean',
         'is_active' => 'boolean',
     ];

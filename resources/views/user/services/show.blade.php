@@ -3,6 +3,11 @@
 @section('page-title', $service->name)
 
 @section('content')
+@php
+    $servicePrice = (int) $service->price_amount;
+    $availableBalance = $wallet->availableBalance();
+    $canAfford = $servicePrice <= 0 || $availableBalance >= $servicePrice;
+@endphp
 <div class="service-run-page">
     <header class="page-heading service-run-heading">
         <div>
@@ -18,6 +23,10 @@
         </div>
     </header>
 
+    @unless($canAfford)
+        <div class="alert alert-warning d-flex align-items-center gap-2"><i class="bi bi-wallet2"></i><div><strong>موجودی کیف پول کافی نیست.</strong><div class="small">برای این استعلام {{ number_format($servicePrice) }} {{ config('billing.currency_label') }} نیاز است و موجودی قابل استفاده شما {{ number_format($availableBalance) }} {{ config('billing.currency_label') }} است.</div></div></div>
+    @endunless
+
     <div class="service-run-layout">
         <section class="service-run-form">
             <div class="service-run-section-heading">
@@ -25,7 +34,7 @@
                 <small><b>*</b> فیلد اجباری</small>
             </div>
 
-            <form method="POST" action="{{ route('requests.store', $service) }}">
+            <form method="POST" action="{{ route('requests.store', $service) }}" data-inquiry-submit>
                 @csrf
                 <div class="row g-3">
                     @forelse($service->inputFields as $field)
@@ -60,8 +69,8 @@
                 </div>
 
                 <div class="service-run-submit">
-                    <div><i class="bi bi-shield-check"></i><span><strong>ارسال امن اطلاعات</strong><small>اطلاعات درخواست به‌صورت رمزنگاری‌شده نگهداری می‌شود.</small></span></div>
-                    <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> ثبت و اجرای استعلام</button>
+                    <div><i class="bi bi-shield-check"></i><span><strong>ارسال امن اطلاعات</strong><small>کسر هزینه فقط پس از دریافت پاسخ موفق انجام می‌شود.</small></span></div>
+                    <button class="btn btn-primary" type="submit" data-inquiry-submit-button @disabled(!$canAfford)><i class="bi bi-send"></i> ثبت و اجرای استعلام</button>
                 </div>
             </form>
         </section>
@@ -71,10 +80,13 @@
                 <h2>مشخصات سرویس</h2>
                 <dl>
                     <div><dt>وضعیت</dt><dd class="text-success"><i class="bi bi-circle-fill"></i> فعال</dd></div>
+                    <div><dt>تعرفه</dt><dd>{{ $servicePrice > 0 ? number_format($servicePrice).' '.config('billing.currency_label') : 'رایگان' }}</dd></div>
+                    <div><dt>موجودی قابل استفاده</dt><dd>{{ number_format($availableBalance) }} {{ config('billing.currency_label') }}</dd></div>
                     <div><dt>تعداد ورودی</dt><dd>{{ $service->inputFields->count() }} مورد</dd></div>
                     <div><dt>مهلت پاسخ</dt><dd>تا {{ $service->timeout_seconds }} ثانیه</dd></div>
                     <div><dt>کد سرویس</dt><dd><code>{{ $service->slug }}</code></dd></div>
                 </dl>
+                <a class="btn btn-sm btn-outline-primary w-100" href="{{ route('wallet.show') }}"><i class="bi bi-wallet2"></i> مشاهده کیف پول</a>
             </div>
             <div class="service-help-card"><i class="bi bi-headset"></i><div><strong>نیاز به راهنمایی دارید؟</strong><p>در صورت ابهام درباره اطلاعات ورودی، پیش از ثبت درخواست با مدیر سامانه در ارتباط باشید.</p></div></div>
         </aside>
