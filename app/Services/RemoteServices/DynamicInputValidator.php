@@ -52,6 +52,7 @@ class DynamicInputValidator
             FieldType::Date => ['date'],
             FieldType::Text, FieldType::Select => ['string', 'max:10000'],
             FieldType::Array => ['array'],
+            FieldType::Object => ['array'],
         };
     }
 
@@ -66,6 +67,7 @@ class DynamicInputValidator
             FieldType::Number => str_contains((string) $value, '.') ? (float) $value : (int) $value,
             FieldType::Text, FieldType::Date, FieldType::Select => (string) $value,
             FieldType::Array => (array) $value,
+            FieldType::Object => (array) $value,
         };
     }
 

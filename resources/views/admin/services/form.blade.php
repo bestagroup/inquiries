@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorClass = name => validationErrors[name] ? ' is-invalid' : '';
     const errorFeedback = name => validationErrors[name] ? `<div class="invalid-feedback">${escape(validationErrors[name][0])}</div>` : '';
     const inputTypes = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب'};
-    const outputTypes = {...inputTypes, array: 'آرایه'};
+    const outputTypes = {...inputTypes, array: 'آرایه', object: 'آبجکت'};
     const typeOptions = (types, selected) => Object.entries(types).map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
 
     const emptyState = (kind, title, text) => `<div class="field-builder-empty"><i class="bi ${kind === 'input' ? 'bi-ui-radios-grid' : 'bi-braces'}"></i><strong>${title}</strong><span>${text}</span></div>`;

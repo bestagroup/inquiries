@@ -189,6 +189,34 @@ class ServiceCatalogTest extends TestCase
             ->assertSessionHasErrors('inputs.0.type');
     }
 
+    public function test_admin_can_define_an_object_output_and_mapper_preserves_its_value(): void
+    {
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+        $payload = $this->servicePayload($service, [
+            'outputs' => [[
+                'label' => 'مشخصات',
+                'key' => 'profile',
+                'type' => FieldType::Object->value,
+                'json_path' => 'data.profile',
+            ]],
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.services.update', $service), $payload)
+            ->assertRedirect(route('admin.services.index'));
+
+        $field = $service->fresh()->fields()->where('direction', FieldDirection::Output)->firstOrFail();
+        $this->assertSame(FieldType::Object, $field->type);
+
+        $profile = ['name' => 'علی رضایی', 'national_id' => '0012345678'];
+        $mapped = app(ResponseMapper::class)->map($service->fresh(), ['data' => ['profile' => $profile]]);
+
+        $this->assertSame($profile, $mapped[0]['value']);
+    }
+
     private function servicePayload(RemoteService $service, array $overrides = []): array
     {
         return array_replace([

@@ -10,4 +10,5 @@ enum FieldType: string
     case Date = 'date';
     case Select = 'select';
     case Array = 'array';
+    case Object = 'object';
 }
