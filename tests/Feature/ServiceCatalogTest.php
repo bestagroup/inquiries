@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\FieldDirection;
+use App\Enums\FieldType;
 use App\Models\RemoteService;
 use App\Models\User;
+use App\Services\RemoteServices\ResponseMapper;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -132,6 +135,58 @@ class ServiceCatalogTest extends TestCase
             ->assertOk()
             ->assertSee('عنوان نمایشی ورودی شماره 1 را وارد کنید.')
             ->assertSee('کلید API ورودی شماره 1 را وارد کنید.');
+    }
+
+    public function test_admin_can_define_an_array_output_and_mapper_preserves_its_value(): void
+    {
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+        $payload = $this->servicePayload($service, [
+            'outputs' => [[
+                'label' => 'سوابق',
+                'key' => 'records',
+                'type' => FieldType::Array->value,
+                'json_path' => 'data.records',
+            ]],
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.services.update', $service), $payload)
+            ->assertRedirect(route('admin.services.index'));
+
+        $field = $service->fresh()->fields()->where('direction', FieldDirection::Output)->firstOrFail();
+        $this->assertSame(FieldType::Array, $field->type);
+
+        $records = [['id' => 1, 'status' => 'active'], ['id' => 2, 'status' => 'inactive']];
+        $mapped = app(ResponseMapper::class)->map($service->fresh(), ['data' => ['records' => $records]]);
+
+        $this->assertSame($records, $mapped[0]['value']);
+    }
+
+    public function test_array_type_cannot_be_used_for_an_input_field(): void
+    {
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+        $payload = $this->servicePayload($service, [
+            'inputs' => [[
+                'label' => 'ورودی آرایه‌ای',
+                'key' => 'records',
+                'type' => FieldType::Array->value,
+                'validation_rules' => '',
+                'default_value' => '',
+                'options' => '',
+                'is_required' => 0,
+                'is_sensitive' => 0,
+            ]],
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.services.update', $service), $payload)
+            ->assertSessionHasErrors('inputs.0.type');
     }
 
     private function servicePayload(RemoteService $service, array $overrides = []): array

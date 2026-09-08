@@ -9,4 +9,5 @@ enum FieldType: string
     case Boolean = 'boolean';
     case Date = 'date';
     case Select = 'select';
+    case Array = 'array';
 }

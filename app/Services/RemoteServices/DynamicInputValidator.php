@@ -51,6 +51,7 @@ class DynamicInputValidator
             FieldType::Boolean => ['boolean'],
             FieldType::Date => ['date'],
             FieldType::Text, FieldType::Select => ['string', 'max:10000'],
+            FieldType::Array => ['array'],
         };
     }
 
@@ -64,6 +65,7 @@ class DynamicInputValidator
             FieldType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             FieldType::Number => str_contains((string) $value, '.') ? (float) $value : (int) $value,
             FieldType::Text, FieldType::Date, FieldType::Select => (string) $value,
+            FieldType::Array => (array) $value,
         };
     }
 

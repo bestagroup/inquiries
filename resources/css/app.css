@@ -227,6 +227,7 @@ form > .d-flex.gap-2 { flex-wrap: wrap; }
 form > .d-flex.gap-2 > .btn { min-width: 112px; }
 .alert { border-radius: .8rem; font-size: .875rem; line-height: 1.9; padding: 1rem 1.15rem; }
 .code-block { direction:ltr; text-align:left; background:#151821; color:#e6edf3; border-radius:.65rem; padding:1rem; overflow:auto; font-family:monospace; font-size:.83rem; }
+.result-array { direction:ltr; max-height:20rem; padding:.75rem; overflow:auto; border:1px solid var(--app-border); border-radius:.6rem; background:#f8f9fc; color:var(--app-text); font-size:.76rem; line-height:1.7; text-align:left; white-space:pre-wrap; }
 .auth-page { min-height:100vh; min-height:100svh; display:grid; place-items:center; padding:1.5rem 1rem; background:radial-gradient(ellipse at 20% 15%, #e9e5ff, transparent 45%), radial-gradient(ellipse at 85% 90%, #e8edf9, transparent 40%), #f7f7fb; }
 .auth-card { width:min(450px,100%); border-color: #fff; border-radius: 1.4rem; box-shadow: 0 20px 60px rgba(54, 46, 112, .09), 0 2px 8px rgba(54, 46, 112, .04); }
 .auth-card .brand-mark { width: 52px; height: 52px; border-radius: 1rem; font-size: 1.4rem; background: linear-gradient(145deg, #7a70e8, var(--app-primary)); box-shadow: 0 6px 14px rgba(var(--app-primary-rgb), .2); }

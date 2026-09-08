@@ -117,8 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
     const errorClass = name => validationErrors[name] ? ' is-invalid' : '';
     const errorFeedback = name => validationErrors[name] ? `<div class="invalid-feedback">${escape(validationErrors[name][0])}</div>` : '';
-    const types = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب'};
-    const typeOptions = selected => Object.entries(types).map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+    const inputTypes = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب'};
+    const outputTypes = {...inputTypes, array: 'آرایه'};
+    const typeOptions = (types, selected) => Object.entries(types).map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
 
     const emptyState = (kind, title, text) => `<div class="field-builder-empty"><i class="bi ${kind === 'input' ? 'bi-ui-radios-grid' : 'bi-braces'}"></i><strong>${title}</strong><span>${text}</span></div>`;
     const inputRow = (value = {}, index) => `<div class="field-builder-row" data-kind="input">
@@ -126,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="row g-3">
             <div class="col-md-6 col-xl-3"><label class="form-label">عنوان نمایشی <b>*</b></label><input class="form-control${errorClass(`inputs.${index}.label`)}" name="inputs[${index}][label]" value="${escape(value.label)}" placeholder="کد ملی" required>${errorFeedback(`inputs.${index}.label`)}</div>
             <div class="col-md-6 col-xl-3"><label class="form-label">کلید API <b>*</b></label><input class="form-control${errorClass(`inputs.${index}.key`)}" dir="ltr" name="inputs[${index}][key]" value="${escape(value.key)}" placeholder="national_id" required>${errorFeedback(`inputs.${index}.key`)}</div>
-            <div class="col-md-6 col-xl-3"><label class="form-label">نوع فیلد</label><select class="form-select${errorClass(`inputs.${index}.type`)}" name="inputs[${index}][type]">${typeOptions(value.type || 'text')}</select>${errorFeedback(`inputs.${index}.type`)}</div>
+            <div class="col-md-6 col-xl-3"><label class="form-label">نوع فیلد</label><select class="form-select${errorClass(`inputs.${index}.type`)}" name="inputs[${index}][type]">${typeOptions(inputTypes, value.type || 'text')}</select>${errorFeedback(`inputs.${index}.type`)}</div>
             <div class="col-md-6 col-xl-3"><label class="form-label">قوانین اعتبارسنجی</label><input class="form-control${errorClass(`inputs.${index}.validation_rules`)}" dir="ltr" name="inputs[${index}][validation_rules]" value="${escape(value.validation_rules)}" placeholder="required|digits:10">${errorFeedback(`inputs.${index}.validation_rules`)}</div>
             <div class="col-md-6"><label class="form-label">مقدار پیش‌فرض</label><input class="form-control" name="inputs[${index}][default_value]" value="${escape(value.default_value)}"></div>
             <div class="col-md-6"><label class="form-label">گزینه‌ها <small>(برای فهرست انتخاب)</small></label><input class="form-control${errorClass(`inputs.${index}.options`)}" name="inputs[${index}][options]" value="${escape(value.options)}" placeholder="گزینه اول، گزینه دوم">${errorFeedback(`inputs.${index}.options`)}</div>
@@ -138,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="row g-3">
             <div class="col-md-6 col-xl-3"><label class="form-label">عنوان نمایشی <b>*</b></label><input class="form-control${errorClass(`outputs.${index}.label`)}" name="outputs[${index}][label]" value="${escape(value.label)}" placeholder="نام و نام خانوادگی" required>${errorFeedback(`outputs.${index}.label`)}</div>
             <div class="col-md-6 col-xl-3"><label class="form-label">کلید داخلی <b>*</b></label><input class="form-control${errorClass(`outputs.${index}.key`)}" dir="ltr" name="outputs[${index}][key]" value="${escape(value.key)}" placeholder="full_name" required>${errorFeedback(`outputs.${index}.key`)}</div>
-            <div class="col-md-6 col-xl-3"><label class="form-label">نوع مقدار</label><select class="form-select${errorClass(`outputs.${index}.type`)}" name="outputs[${index}][type]">${typeOptions(value.type || 'text')}</select>${errorFeedback(`outputs.${index}.type`)}</div>
+            <div class="col-md-6 col-xl-3"><label class="form-label">نوع مقدار</label><select class="form-select${errorClass(`outputs.${index}.type`)}" name="outputs[${index}][type]">${typeOptions(outputTypes, value.type || 'text')}</select>${errorFeedback(`outputs.${index}.type`)}</div>
             <div class="col-md-6 col-xl-3"><label class="form-label">مسیر در پاسخ</label><input class="form-control${errorClass(`outputs.${index}.json_path`)}" dir="ltr" name="outputs[${index}][json_path]" value="${escape(value.json_path)}" placeholder="data.person.name">${errorFeedback(`outputs.${index}.json_path`)}</div>
         </div>
     </div>`;

@@ -14,7 +14,11 @@
                     <div class="col-md-6">
                         <div class="border rounded p-3 h-100">
                             <div class="text-muted small">{{ $row['label'] ?? $row['key'] }}</div>
-                            <div class="fw-bold text-break">{{ is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? ($value === '' ? '-' : $value) : json_encode($value, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)) }}</div>
+                            @if(is_array($value))
+                                <pre class="result-array mb-0">{{ json_encode($value, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT) }}</pre>
+                            @else
+                                <div class="fw-bold text-break">{{ is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? ($value === '' ? '-' : $value) : '-') }}</div>
+                            @endif
                         </div>
                     </div>
                 @endforeach
