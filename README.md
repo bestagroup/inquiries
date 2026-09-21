@@ -83,15 +83,29 @@ Seeder کاتالوگ، ۱۵ سرویس پایه استعلامی و ورودی�
 
 1. آدرس Endpoint و متد HTTP
 2. نحوه ارسال پارامترها و فرمت پاسخ
-3. Headerهای لازم مانند `Authorization` به‌صورت JSON
+3. Headerهای غیرحساس اختصاصی به‌صورت JSON؛ هدر احراز هویت `token` به‌صورت خودکار از `.env` اعمال می‌شود
 4. فیلدهای ورودی کاربر و قوانین اعتبارسنجی
 5. فیلدهای خروجی و مسیر آن‌ها در پاسخ؛ نمونه: `data.person.name`
 
-Headerهای `Host`، `Content-Length`، `Transfer-Encoding` و `Connection` عمداً قابل تعریف نیستند. Redirect سرویس مقصد نیز دنبال نمی‌شود؛ آدرس نهایی باید مستقیماً در Endpoint ثبت شود.
+Headerهای `Host`، `Content-Length`، `Transfer-Encoding`، `Connection`، `Authorization` و `token` عمداً قابل تعریف نیستند. مقدار `token` فقط از `REMOTE_SERVICE_TOKEN` خوانده می‌شود. Redirect سرویس مقصد نیز دنبال نمی‌شود؛ آدرس نهایی باید مستقیماً در Endpoint ثبت شود.
+
+توکن مشترک سرویس‌ها را فقط در فایل `.env` سرور قرار دهید:
+
+```dotenv
+REMOTE_SERVICE_TOKEN=YOUR_APPLICATION_TOKEN
+```
+
+درخواست JSON به سرویس مقصد به‌صورت زیر ارسال می‌شود و هیچ `Bearer` یا هدر `Authorization` به آن اضافه نمی‌شود:
+
+```http
+Content-Type: application/json
+token: YOUR_APPLICATION_TOKEN
+```
 
 در Production بهتر است دامنه‌های مجاز را صریح تعیین کنید:
 
 ```dotenv
+REMOTE_SERVICE_TOKEN=YOUR_APPLICATION_TOKEN
 REMOTE_SERVICE_ALLOWED_HOSTS=api.example.com,*.trusted.example
 REMOTE_SERVICE_ALLOW_PRIVATE_NETWORKS=false
 REMOTE_SERVICE_REQUIRE_HTTPS=true
@@ -132,5 +146,6 @@ npm audit
 - اجرای `php artisan config:cache` و `php artisan route:cache` پس از نهایی‌شدن `.env`
 - فعال‌بودن Worker صف و مانیتورکردن `failed_jobs`
 - پشتیبان‌گیری منظم از دیتابیس و `APP_KEY`
+- تعریف `REMOTE_SERVICE_TOKEN` فقط در `.env` و عدم ثبت آن در دیتابیس یا Headerهای سرویس
 - محدودکردن `REMOTE_SERVICE_ALLOWED_HOSTS`
 - نگهداری پروژه در مسیر غیرعمومی و دسترسی وب فقط به `public`
