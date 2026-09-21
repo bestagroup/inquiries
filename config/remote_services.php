@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'token' => trim((string) env('REMOTE_SERVICE_TOKEN', '')),
     'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('REMOTE_SERVICE_ALLOWED_HOSTS', ''))))),
     'allow_private_networks' => (bool) env('REMOTE_SERVICE_ALLOW_PRIVATE_NETWORKS', false),
     'require_https_in_production' => (bool) env('REMOTE_SERVICE_REQUIRE_HTTPS', true),

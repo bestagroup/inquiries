@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\BillingController;
-use App\Http\Controllers\Admin\IntegrationSettingsController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\ServiceRequestController as AdminServiceRequestController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -37,8 +36,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::resource('services', AdminServiceController::class)->except(['show']);
         Route::get('billing', [BillingController::class, 'edit'])->name('billing.edit');
         Route::put('billing', [BillingController::class, 'update'])->name('billing.update');
-        Route::get('settings/integration', [IntegrationSettingsController::class, 'edit'])->name('settings.integration.edit');
-        Route::put('settings/integration', [IntegrationSettingsController::class, 'update'])->name('settings.integration.update');
         Route::get('requests', [AdminServiceRequestController::class, 'index'])->name('requests.index');
         Route::get('requests/{request}', [AdminServiceRequestController::class, 'show'])->name('requests.show');
         Route::get('requests/{request}/attempts/{attempt}', [AdminServiceRequestController::class, 'attempt'])->name('requests.attempts.show');

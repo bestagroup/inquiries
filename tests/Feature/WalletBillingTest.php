@@ -7,7 +7,6 @@ use App\Enums\ResponseFormat;
 use App\Enums\ServiceHttpMethod;
 use App\Models\RemoteService;
 use App\Models\ServiceRequest;
-use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\WalletReservation;
 use App\Models\WalletTransaction;
@@ -27,10 +26,7 @@ class WalletBillingTest extends TestCase
         config()->set('remote_services.enforce_dns_resolution', false);
         config()->set('remote_services.require_https_in_production', false);
 
-        SystemSetting::query()->create([
-            'key' => SystemSetting::REMOTE_SERVICE_TOKEN,
-            'value' => 'wallet-test-token',
-        ]);
+        config()->set('remote_services.token', 'wallet-test-token');
     }
 
     public function test_admin_can_set_user_wallet_balance_and_adjustments_are_ledgered(): void
