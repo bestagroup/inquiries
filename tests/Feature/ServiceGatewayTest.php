@@ -131,7 +131,8 @@ class ServiceGatewayTest extends TestCase
         $service = $this->makeService();
         $service->update(['headers' => [
             'Accept' => 'application/json',
-            'Authorization' => 'Bearer service-specific-token',
+            'Authorization' => 'legacy-value',
+            'token' => 'legacy-value',
         ]]);
         $service->fields()->create([
             'direction' => FieldDirection::Input,
@@ -160,7 +161,14 @@ class ServiceGatewayTest extends TestCase
         $this->assertSame('succeeded', $request->fresh()->status->value);
         $this->assertCount(1, $request->attempts);
         $this->assertSame('Ali', $request->attempts->first()->mapped_response[0]['value']);
-        Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer shared-test-token'));
+        Http::assertSent(function ($request): bool {
+            $body = json_decode($request->body(), true);
+
+            return $request->hasHeader('token', 'shared-test-token')
+                && ! $request->hasHeader('Authorization')
+                && $request->hasHeader('Content-Type', 'application/json')
+                && ($body['national_id'] ?? null) === '0012345678';
+        });
 
         $raw = DB::table('service_requests')->where('id', $request->id)->value('input_payload');
         $this->assertStringNotContainsString('0012345678', $raw);
