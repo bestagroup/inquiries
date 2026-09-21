@@ -15,7 +15,7 @@
     ])->values()->all();
     $inputRows = old('inputs_present') ? old('inputs', []) : $storedInputRows;
     $outputRows = old('outputs_present') ? old('outputs', []) : $storedOutputRows;
-    $serviceHeaders = collect($service->headers ?? [])->reject(fn ($value, $key) => strtolower((string) $key) === 'authorization')->all();
+    $serviceHeaders = collect($service->headers ?? [])->reject(fn ($value, $key) => in_array(strtolower((string) $key), ['authorization', 'token'], true))->all();
     $headers = old('headers_json', $service->exists ? json_encode($serviceHeaders, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '{}');
 @endphp
 
@@ -73,7 +73,7 @@
                     <div class="col-sm-4 col-xl-4"><label class="form-label">HTTP Method <b>*</b></label><select class="form-select" name="http_method">@foreach(['GET', 'POST', 'PUT', 'PATCH'] as $method)<option @selected(old('http_method', $service->http_method?->value ?? 'POST') === $method)>{{ $method }}</option>@endforeach</select></div>
                     <div class="col-sm-6"><label class="form-label">نحوه ارسال داده <b>*</b></label><select class="form-select @error('payload_mode') is-invalid @enderror" name="payload_mode">@foreach(['json' => 'JSON Body', 'form' => 'Form URL Encoded', 'query' => 'Query String'] as $key => $label)<option value="{{ $key }}" @selected(old('payload_mode', $service->payload_mode?->value ?? 'json') === $key)>{{ $label }}</option>@endforeach</select>@error('payload_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
                     <div class="col-sm-6"><label class="form-label">فرمت پاسخ <b>*</b></label><select class="form-select" name="response_format">@foreach(['json' => 'JSON', 'text' => 'Text', 'xml' => 'XML'] as $key => $label)<option value="{{ $key }}" @selected(old('response_format', $service->response_format?->value ?? 'json') === $key)>{{ $label }}</option>@endforeach</select></div>
-                    <div class="col-12"><label class="form-label">Headerهای اختصاصی</label><textarea class="form-control font-monospace editor-code-input @error('headers_json') is-invalid @enderror" dir="ltr" rows="6" name="headers_json" spellcheck="false">{{ $headers }}</textarea>@error('headers_json')<div class="invalid-feedback">{{ $message }}</div>@enderror<div class="form-text"><i class="bi bi-shield-lock"></i> Authorization از «توکن سرویس‌ها» اعمال می‌شود؛ اینجا فقط Headerهای اختصاصی را به شکل JSON وارد کنید.</div></div>
+                    <div class="col-12"><label class="form-label">Headerهای اختصاصی</label><textarea class="form-control font-monospace editor-code-input @error('headers_json') is-invalid @enderror" dir="ltr" rows="6" name="headers_json" spellcheck="false">{{ $headers }}</textarea>@error('headers_json')<div class="invalid-feedback">{{ $message }}</div>@enderror<div class="form-text"><i class="bi bi-shield-lock"></i> هدر token به‌صورت خودکار از REMOTE_SERVICE_TOKEN در فایل .env اعمال می‌شود؛ اینجا فقط Headerهای غیرحساس اختصاصی را وارد کنید.</div></div>
                 </div>
             </section>
 
