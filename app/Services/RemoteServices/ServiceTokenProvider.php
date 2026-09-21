@@ -2,19 +2,18 @@
 
 namespace App\Services\RemoteServices;
 
-use App\Models\SystemSetting;
 use RuntimeException;
 
 class ServiceTokenProvider
 {
-    public function authorizationHeader(): string
+    public function token(): string
     {
-        $token = SystemSetting::remoteServiceToken();
+        $token = trim((string) config('remote_services.token', ''));
 
-        if ($token === null) {
-            throw new RuntimeException('توکن مشترک سرویس‌ها هنوز توسط مدیر سامانه تعریف نشده است.');
+        if ($token === '') {
+            throw new RuntimeException('توکن سرویس‌های استعلام در REMOTE_SERVICE_TOKEN تنظیم نشده است.');
         }
 
-        return 'Bearer '.$token;
+        return $token;
     }
 }
