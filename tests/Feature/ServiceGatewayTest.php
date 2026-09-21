@@ -12,7 +12,6 @@ use App\Jobs\ExecuteRemoteServiceRequest;
 use App\Models\RemoteService;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttempt;
-use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -29,59 +28,20 @@ class ServiceGatewayTest extends TestCase
         parent::setUp();
         config()->set('remote_services.enforce_dns_resolution', false);
         config()->set('remote_services.require_https_in_production', false);
-        SystemSetting::query()->create([
-            'key' => SystemSetting::REMOTE_SERVICE_TOKEN,
-            'value' => 'shared-test-token',
-        ]);
+        config()->set('remote_services.token', 'shared-test-token');
     }
 
-    public function test_admin_can_define_the_global_service_token_and_it_is_encrypted(): void
-    {
-        $this->withoutVite();
-        $admin = User::factory()->admin()->create();
-        $plainToken = 'updated-global-token';
-
-        $this->actingAs($admin)
-            ->put(route('admin.settings.integration.update'), ['service_token' => $plainToken])
-            ->assertRedirect(route('admin.settings.integration.edit'));
-
-        $this->assertSame($plainToken, SystemSetting::remoteServiceToken());
-        $rawValue = (string) DB::table('system_settings')
-            ->where('key', SystemSetting::REMOTE_SERVICE_TOKEN)
-            ->value('value');
-        $this->assertStringNotContainsString($plainToken, $rawValue);
-
-        $this->actingAs($admin)
-            ->get(route('admin.settings.integration.edit'))
-            ->assertOk()
-            ->assertDontSee($plainToken);
-    }
-
-    public function test_global_service_token_is_required_before_first_save(): void
-    {
-        SystemSetting::query()->delete();
-        $admin = User::factory()->admin()->create();
-
-        $this->actingAs($admin)
-            ->from(route('admin.settings.integration.edit'))
-            ->put(route('admin.settings.integration.update'), ['service_token' => ''])
-            ->assertRedirect(route('admin.settings.integration.edit'))
-            ->assertSessionHasErrors('service_token');
-    }
-
-    public function test_remote_request_fails_safely_when_global_token_is_missing(): void
+    public function test_remote_request_fails_safely_when_env_token_is_missing(): void
     {
         Http::fake();
-        SystemSetting::query()->delete();
+        config()->set('remote_services.token', '');
         $user = User::factory()->create();
         $service = $this->makeService();
         $user->services()->attach($service->id, ['is_active' => true, 'assigned_at' => now()]);
-
         $this->actingAs($user)->post(route('requests.store', $service))->assertRedirect();
-
         $request = ServiceRequest::query()->firstOrFail();
         $this->assertSame('failed', $request->status->value);
-        $this->assertStringContainsString('توکن مشترک', (string) $request->last_error);
+        $this->assertStringContainsString('REMOTE_SERVICE_TOKEN', (string) $request->last_error);
         Http::assertNothingSent();
     }
 
