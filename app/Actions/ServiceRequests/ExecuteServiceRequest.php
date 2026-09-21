@@ -174,8 +174,8 @@ class ExecuteServiceRequest
     {
         $service = $serviceRequest->service;
         $headers = collect((array) $service->headers)
-            ->reject(fn ($value, $key): bool => strtolower((string) $key) === 'authorization')
-            ->put('Authorization', $this->serviceTokenProvider->authorizationHeader())
+            ->reject(fn ($value, $key): bool => in_array(strtolower((string) $key), ['authorization', 'token'], true))
+            ->put('token', $this->serviceTokenProvider->token())
             ->all();
 
         $pending = Http::withHeaders($headers)
