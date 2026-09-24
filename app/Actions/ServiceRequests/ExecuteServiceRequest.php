@@ -41,11 +41,7 @@ class ExecuteServiceRequest
             throw new RuntimeException('حساب کاربری درخواست‌دهنده غیرفعال است.');
         }
 
-        $assignment = $serviceRequest->user->services()
-            ->whereKey($serviceRequest->service_id)
-            ->wherePivot('is_active', true)
-            ->first();
-        if (! $assignment) {
+        if (! $serviceRequest->user->canUseService($service)) {
             throw new RuntimeException('دسترسی کاربر به این سرویس لغو شده است.');
         }
 

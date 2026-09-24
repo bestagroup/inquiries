@@ -11,31 +11,22 @@ class ServiceCatalogController extends Controller
 {
     public function index(WalletService $wallets): View
     {
-        $services = request()->user()->services()
-            ->wherePivot('is_active', true)
-            ->where('services.is_active', true)
-            ->with('inputFields')
-            ->orderBy('sort_order')->orderBy('name')->get();
-        $wallet = $wallets->walletFor(request()->user());
+        $user = request()->user();
+        $services = $user->isAdmin()
+            ? RemoteService::query()->where('is_active', true)->with('inputFields')->orderBy('sort_order')->orderBy('name')->get()
+            : $user->services()->wherePivot('is_active', true)->where('services.is_active', true)
+                ->with('inputFields')->orderBy('sort_order')->orderBy('name')->get();
+        $wallet = $user->isAdmin() ? null : $wallets->walletFor($user);
 
         return view('user.services.index', compact('services', 'wallet'));
     }
 
     public function show(RemoteService $service, WalletService $wallets): View
     {
-        $this->authorizeService($service);
+        abort_unless(request()->user()->canUseService($service), 403, 'این سرویس برای شما قابل استفاده نیست.');
         $service->load(['inputFields', 'outputFields']);
-        $wallet = $wallets->walletFor(request()->user());
+        $wallet = request()->user()->isAdmin() ? null : $wallets->walletFor(request()->user());
 
         return view('user.services.show', compact('service', 'wallet'));
-    }
-
-    private function authorizeService(RemoteService $service): void
-    {
-        abort_unless(
-            $service->is_active && request()->user()->services()->whereKey($service->id)->wherePivot('is_active', true)->exists(),
-            403,
-            'این سرویس به شما تخصیص داده نشده است.'
-        );
     }
 }

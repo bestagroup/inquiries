@@ -13,9 +13,11 @@
             <h1>سرویس‌های استعلام</h1>
             <p>سرویس مورد نیاز را پیدا کنید و استعلام جدید را در چند مرحله کوتاه ثبت کنید.</p>
         </div>
+        @unless(auth()->user()->isAdmin())
         <div class="page-heading-actions">
             <a class="btn btn-outline-primary" href="{{ route('wallet.show') }}"><i class="bi bi-wallet2"></i> موجودی: {{ number_format($wallet->availableBalance()) }} {{ config('billing.currency_label') }}</a>
         </div>
+        @endunless
     </header>
 
     <section class="catalog-toolbar" aria-label="جست‌وجو و فیلتر سرویس‌ها">
@@ -52,7 +54,7 @@
                         </div>
                     </div>
                     <p>{{ \Illuminate\Support\Str::limit((string) $service->description, 145) }}</p>
-                    <div class="small text-muted mb-2"><i class="bi bi-cash-coin"></i> تعرفه: {{ $service->price_amount > 0 ? number_format($service->price_amount).' '.config('billing.currency_label') : 'رایگان' }}</div>
+                    <div class="small text-muted mb-2"><i class="bi bi-cash-coin"></i> {{ auth()->user()->isAdmin() ? 'استعلام مدیر: بدون کسر هزینه' : 'تعرفه: '.($service->price_amount > 0 ? number_format($service->price_amount).' '.config('billing.currency_label') : 'رایگان') }}</div>
                     <footer>
                         <span><i class="bi bi-input-cursor-text"></i> {{ $service->inputFields->count() }} ورودی</span>
                         <a href="{{ route('services.show', $service) }}" aria-label="شروع {{ $service->name }}">شروع استعلام <i class="bi bi-arrow-left"></i></a>
@@ -60,7 +62,7 @@
                 </article>
             </div>
         @empty
-            <div class="col-12"><div class="catalog-empty"><i class="bi bi-inboxes"></i><h2>سرویسی برای حساب شما فعال نشده است</h2><p>برای دریافت دسترسی با مدیر سامانه در ارتباط باشید.</p></div></div>
+            <div class="col-12"><div class="catalog-empty"><i class="bi bi-inboxes"></i><h2>سرویسی برای حساب شما فعال نشده است</h2>@unless(auth()->user()->isAdmin())<p>برای دریافت دسترسی با مدیر سامانه در ارتباط باشید.</p>@endunless</div></div>
         @endforelse
     </div>
 

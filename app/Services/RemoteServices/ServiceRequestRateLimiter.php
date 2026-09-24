@@ -20,16 +20,12 @@ class ServiceRequestRateLimiter
             throw new RuntimeException('حساب کاربری درخواست‌دهنده غیرفعال است.');
         }
 
-        $assignment = $request->user->services()
-            ->whereKey($request->service_id)
-            ->wherePivot('is_active', true)
-            ->first();
-
-        if (! $assignment) {
+        if (! $request->user->canUseService($request->service)) {
             throw new RuntimeException('دسترسی کاربر به این سرویس لغو شده است.');
         }
 
-        $limit = (int) ($assignment->pivot?->rate_limit_per_minute ?: $request->service->rate_limit_per_minute);
+        $assignment = $request->user->isAdmin() ? null : $request->user->services()->whereKey($request->service_id)->first();
+        $limit = (int) ($assignment?->pivot?->rate_limit_per_minute ?: $request->service->rate_limit_per_minute);
         $key = 'remote-service:'.$request->user_id.':'.$request->service_id;
 
         if (RateLimiter::tooManyAttempts($key, max(1, $limit))) {

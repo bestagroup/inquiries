@@ -124,6 +124,81 @@ class ServiceGatewayTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_admin_can_run_and_rerun_an_unassigned_paid_service_without_wallet_debit(): void
+    {
+        $this->withoutVite();
+        config()->set('remote_services.async', false);
+        Http::fake(['https://api.example.test/*' => Http::response(['result' => 'ok'], 200)]);
+        $admin = User::factory()->admin()->create();
+        $service = $this->makeService();
+        $service->update(['price_amount' => 12000]);
+
+        $this->actingAs($admin)->get(route('services.index'))
+            ->assertOk()
+            ->assertSee($service->name)
+            ->assertSee('استعلام مدیر: بدون کسر هزینه');
+        $this->actingAs($admin)->get(route('services.show', $service))
+            ->assertOk()
+            ->assertSee('برای استعلام مدیر هزینه‌ای کسر نمی‌شود.');
+
+        $this->actingAs($admin)->post(route('requests.store', $service))->assertRedirect();
+        $request = ServiceRequest::query()->firstOrFail();
+        $this->assertSame($admin->id, $request->user_id);
+        $this->assertSame('succeeded', $request->status->value);
+        $this->assertSame(0, $request->attempts()->firstOrFail()->price_amount);
+
+        $this->actingAs($admin)->get(route('requests.show', $request))->assertOk()->assertSee('اجرای مجدد با همین اطلاعات');
+        $this->actingAs($admin)->post(route('requests.refresh', $request))->assertRedirect(route('requests.show', $request));
+        $this->assertSame(2, $request->fresh()->attempt_count);
+        $this->assertDatabaseCount('wallet_reservations', 0);
+        $this->assertDatabaseCount('wallet_transactions', 0);
+        $this->actingAs($admin)->get(route('requests.index'))->assertOk();
+        Http::assertSentCount(2);
+    }
+
+    public function test_admin_cannot_run_an_inactive_service(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $service = $this->makeService();
+        $service->update(['is_active' => false]);
+
+        $this->actingAs($admin)->get(route('services.show', $service))->assertForbidden();
+        $this->actingAs($admin)->post(route('requests.store', $service))->assertForbidden();
+        $this->assertDatabaseCount('service_requests', 0);
+    }
+
+    public function test_admin_own_request_actions_do_not_edit_another_users_request(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->create();
+        $service = $this->makeService();
+        $request = ServiceRequest::query()->create([
+            'user_id' => $owner->id,
+            'service_id' => $service->id,
+            'input_payload' => [],
+            'status' => 'failed',
+        ]);
+
+        $this->actingAs($admin)->get(route('requests.show', $request))->assertForbidden();
+        $this->actingAs($admin)->post(route('requests.refresh', $request))->assertForbidden();
+        $this->assertSame(0, $request->fresh()->attempt_count);
+    }
+
+    public function test_admin_queries_still_obey_service_rate_limit(): void
+    {
+        Queue::fake();
+        config()->set('remote_services.async', true);
+        $admin = User::factory()->admin()->create();
+        $service = $this->makeService();
+        $service->update(['rate_limit_per_minute' => 1]);
+
+        $this->actingAs($admin)->post(route('requests.store', $service));
+        $this->actingAs($admin)->post(route('requests.store', $service));
+
+        Queue::assertPushed(ExecuteRemoteServiceRequest::class, 1);
+        $this->assertSame('failed', ServiceRequest::query()->latest('id')->firstOrFail()->status->value);
+    }
+
     public function test_successful_execution_is_saved_and_request_payload_is_encrypted(): void
     {
         Http::fake(['https://api.example.test/*' => Http::response(['data' => ['name' => 'Ali']], 200)]);

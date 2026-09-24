@@ -33,6 +33,15 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
+    public function canUseService(RemoteService $service): bool
+    {
+        return ! $service->trashed() && $service->is_active
+            && ($this->isAdmin() || $this->services()
+                ->whereKey($service->getKey())
+                ->wherePivot('is_active', true)
+                ->exists());
+    }
+
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(RemoteService::class, 'service_user', 'user_id', 'service_id')

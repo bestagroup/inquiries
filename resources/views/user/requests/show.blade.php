@@ -5,13 +5,11 @@
 @php
     $canReexecute = $serviceRequest->status->value !== 'pending'
         && $serviceRequest->service
-        && ! $serviceRequest->service->trashed()
-        && $serviceRequest->service->is_active
         && $serviceRequest->service->allow_resubmit
-        && auth()->user()->services()->whereKey($serviceRequest->service_id)->wherePivot('is_active', true)->exists();
+        && auth()->user()->canUseService($serviceRequest->service);
     $currentPrice = (int) ($serviceRequest->service?->price_amount ?? 0);
-    $wallet = auth()->user()->wallet;
-    $canAfford = $currentPrice <= 0 || (($wallet?->availableBalance() ?? 0) >= $currentPrice);
+    $wallet = auth()->user()->isAdmin() ? null : auth()->user()->wallet;
+    $canAfford = auth()->user()->isAdmin() || $currentPrice <= 0 || (($wallet?->availableBalance() ?? 0) >= $currentPrice);
 @endphp
 
 <div class="d-flex flex-wrap gap-2 mb-3">

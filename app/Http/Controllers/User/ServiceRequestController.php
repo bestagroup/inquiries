@@ -150,24 +150,15 @@ class ServiceRequestController extends Controller
 
     private function authorizeService(RemoteService $service): void
     {
-        abort_unless(
-            $service->is_active && request()->user()->services()->whereKey($service->id)->wherePivot('is_active', true)->exists(),
-            403,
-            'این سرویس به شما تخصیص داده نشده است.'
-        );
+        abort_unless(request()->user()->canUseService($service), 403, 'این سرویس برای شما قابل استفاده نیست.');
     }
 
     private function assertCanReexecute(ServiceRequest $request): void
     {
         $service = $request->service;
-        $assigned = request()->user()->services()
-            ->whereKey($request->service_id)
-            ->wherePivot('is_active', true)
-            ->exists();
-
         abort_unless(
             $request->status !== ServiceRequestStatus::Pending
-                && $service && ! $service->trashed() && $service->is_active && $service->allow_resubmit && $assigned,
+                && $service && $service->allow_resubmit && request()->user()->canUseService($service),
             403,
             'این درخواست در حال پردازش است یا اجرای مجدد آن در حال حاضر مجاز نیست.'
         );

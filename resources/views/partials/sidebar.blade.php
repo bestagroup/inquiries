@@ -7,6 +7,9 @@
     <div class="sidebar-title">سامانه</div>
     <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid"></i> داشبورد</a>
     @if(auth()->user()->isAdmin())
+        <div class="sidebar-title">استعلام‌های من</div>
+        <a class="sidebar-link {{ request()->routeIs('services.*') ? 'active' : '' }}" href="{{ route('services.index') }}"><i class="bi bi-ui-checks-grid"></i> ثبت استعلام</a>
+        <a class="sidebar-link {{ request()->routeIs('requests.*') ? 'active' : '' }}" href="{{ route('requests.index') }}"><i class="bi bi-receipt"></i> درخواست‌های من</a>
         <div class="sidebar-title">مدیریت</div>
         <a class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}"><i class="bi bi-people"></i> کاربران</a>
         <a class="sidebar-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}"><i class="bi bi-hdd-network"></i> سرویس‌ها</a>

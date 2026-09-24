@@ -63,7 +63,7 @@ class WalletService
         $request->loadMissing(['service', 'user']);
         $amount = (int) ($request->service?->price_amount ?? 0);
 
-        if ($amount <= 0) {
+        if ($amount <= 0 || $request->user?->isAdmin()) {
             return null;
         }
 
