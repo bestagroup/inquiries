@@ -36,7 +36,7 @@ class ServiceRequestController extends Controller
         $statuses = $counts->pluck('last_http_status')
             ->unique()
             ->sortBy(fn ($status) => $status === null ? PHP_INT_MAX : (int) $status)
-            ->map(function ($status): array {
+            ->map(function ($status) use ($counts): array {
                 $code = $status === null ? null : (int) $status;
                 $hue = match (true) {
                     $code === null => 220,
@@ -52,6 +52,7 @@ class ServiceRequestController extends Controller
                     'key' => $code === null ? 'none' : (string) $code,
                     'label' => $code === null ? 'بدون پاسخ HTTP' : 'HTTP '.$code,
                     'color' => "hsl({$hue} 66% {$lightness}%)",
+                    'total' => (int) $counts->filter(fn ($row) => $row->last_http_status === $status)->sum('total'),
                 ];
             })->values()->all();
 
@@ -75,12 +76,18 @@ class ServiceRequestController extends Controller
                 'date' => $day->toDateString(),
                 'total' => $total,
                 'segments' => $segments,
+                'is_today' => $offset === 6,
             ];
         }
 
         $chartMax = max(1, ...array_column($chartDays, 'total'));
+        $chartSummary = [
+            'total' => (int) $counts->sum('total'),
+            'success' => (int) $counts->filter(fn ($row) => $row->last_http_status >= 200 && $row->last_http_status < 300)->sum('total'),
+            'without_http' => (int) $counts->filter(fn ($row) => $row->last_http_status === null)->sum('total'),
+        ];
 
-        return view('admin.requests.index', compact('chartDays', 'chartMax', 'statuses'));
+        return view('admin.requests.index', compact('chartDays', 'chartMax', 'chartSummary', 'statuses'));
     }
 
     public function show(ServiceRequest $request): View

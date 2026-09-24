@@ -35,7 +35,9 @@ class AdminRequestChartTest extends TestCase
         $this->actingAs($admin)->get(route('admin.requests.index'))
             ->assertOk()
             ->assertSee('وضعیت HTTP درخواست‌ها')
-            ->assertViewHas('statuses', fn (array $statuses) => array_column($statuses, 'key') === ['200', '404', '500', 'none'])
+            ->assertSee('توزیع روزانه پاسخ‌ها')
+            ->assertViewHas('statuses', fn (array $statuses) => array_column($statuses, 'total', 'key') === ['200' => 2, '404' => 1, '500' => 1, 'none' => 1])
+            ->assertViewHas('chartSummary', ['total' => 5, 'success' => 2, 'without_http' => 1])
             ->assertViewHas('chartDays', function (array $days): bool {
                 $today = $days[6];
                 $yesterday = $days[5];

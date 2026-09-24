@@ -4,36 +4,56 @@
 
 @section('content')
 <section class="card request-status-card mb-4" aria-labelledby="request-status-title">
-    <div class="card-header">
-        <h5 class="mb-1" id="request-status-title">وضعیت HTTP درخواست‌ها</h5>
-        <div class="text-muted small">۷ روز اخیر، بر اساس تاریخ ثبت درخواست و آخرین پاسخ HTTP آن</div>
-    </div>
     <div class="card-body">
-        @if($statuses === [])
-            <div class="text-center text-muted py-5">در ۷ روز اخیر درخواستی ثبت نشده است.</div>
-        @else
-            <div class="request-status-legend" aria-hidden="true">
-                @foreach($statuses as $status)
-                    <span><i style="background-color: {{ $status['color'] }}"></i>{{ $status['label'] }}</span>
-                @endforeach
+        <header class="request-status-header">
+            <div class="request-status-heading">
+                <span class="request-status-heading-icon"><i class="bi bi-bar-chart-line-fill" aria-hidden="true"></i></span>
+                <div>
+                    <span class="request-status-eyebrow">نمای کلی عملکرد</span>
+                    <h2 id="request-status-title">وضعیت HTTP درخواست‌ها</h2>
+                    <p>روند روزانه بر اساس تاریخ ثبت درخواست و آخرین پاسخ HTTP آن</p>
+                </div>
             </div>
-            <div class="request-status-chart" aria-hidden="true">
-                <div class="request-status-scale"><span>{{ $chartMax }}</span><span>{{ (int) ceil($chartMax / 2) }}</span><span>۰</span></div>
-                <div class="request-status-plot">
-                    @foreach($chartDays as $day)
-                        <div class="request-status-day">
-                            <div class="request-status-column">
-                                @if($day['total'] > 0)
-                                    <div class="request-status-stack" style="height: {{ 100 * $day['total'] / $chartMax }}%">
-                                        @foreach($day['segments'] as $segment)
-                                            <div class="request-status-segment" style="height: {{ $segment['percent'] }}%; background-color: {{ $segment['color'] }}" title="{{ $day['date'] }} — {{ $segment['label'] }}: {{ $segment['count'] }}"></div>
-                                        @endforeach
-                                    </div>
-                                @endif
+            <span class="request-status-period"><i class="bi bi-calendar3" aria-hidden="true"></i> ۷ روز اخیر</span>
+        </header>
+
+        @if($statuses === [])
+            <div class="request-status-empty"><span><i class="bi bi-graph-up" aria-hidden="true"></i></span><strong>هنوز داده‌ای برای نمایش نیست</strong><p>در ۷ روز اخیر درخواستی ثبت نشده است.</p></div>
+        @else
+            <div class="request-status-summary" aria-label="خلاصه ۷ روز اخیر">
+                <div class="request-status-metric"><span class="request-status-metric-icon is-total"><i class="bi bi-layers" aria-hidden="true"></i></span><div><span>کل درخواست‌ها</span><strong>{{ number_format($chartSummary['total']) }}</strong></div></div>
+                <div class="request-status-metric"><span class="request-status-metric-icon is-success"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><div><span>پاسخ‌های 2xx</span><strong>{{ number_format($chartSummary['success']) }}</strong></div></div>
+                <div class="request-status-metric"><span class="request-status-metric-icon is-unanswered"><i class="bi bi-dash-circle" aria-hidden="true"></i></span><div><span>بدون پاسخ HTTP</span><strong>{{ number_format($chartSummary['without_http']) }}</strong></div></div>
+            </div>
+
+            <div class="request-status-visual">
+                <div class="request-status-visual-head"><div><strong>توزیع روزانه پاسخ‌ها</strong><span>هر رنگ نشان‌دهنده یک کد HTTP است</span></div><span class="request-status-unit">تعداد درخواست</span></div>
+                <div class="request-status-chart" aria-hidden="true">
+                    <div class="request-status-scale"><span>{{ $chartMax }}</span><span>{{ (int) ceil($chartMax / 2) }}</span><span>۰</span></div>
+                    <div class="request-status-plot">
+                        @foreach($chartDays as $day)
+                            <div class="request-status-day {{ $day['is_today'] ? 'is-today' : '' }}">
+                                <div class="request-status-column">
+                                    @if($day['total'] > 0)
+                                        <div class="request-status-bar" style="height: {{ 100 * $day['total'] / $chartMax }}%">
+                                            <span class="request-status-bar-total">{{ $day['total'] }}</span>
+                                            <div class="request-status-stack">
+                                                @foreach($day['segments'] as $segment)
+                                                    <div class="request-status-segment" style="height: {{ $segment['percent'] }}%; background-color: {{ $segment['color'] }}" title="{{ $day['date'] }} — {{ $segment['label'] }}: {{ $segment['count'] }}"></div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                                <span class="request-status-date">{{ $day['label'] }}</span>
+                                @if($day['is_today'])<span class="request-status-today">امروز</span>@endif
                             </div>
-                            <span class="request-status-date">{{ $day['label'] }}</span>
-                            <span class="request-status-total">{{ $day['total'] }}</span>
-                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="request-status-legend" aria-hidden="true">
+                    @foreach($statuses as $status)
+                        <span class="request-status-legend-item"><i style="background-color: {{ $status['color'] }}"></i><span>{{ $status['label'] }}</span><b>{{ number_format($status['total']) }}</b></span>
                     @endforeach
                 </div>
             </div>
