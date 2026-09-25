@@ -33,7 +33,6 @@
         </div>
         <div class="page-heading-actions">
             <a class="btn btn-outline-secondary" href="{{ route('admin.services.index') }}">انصراف</a>
-            <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> ذخیره سرویس</button>
         </div>
     </header>
 
@@ -100,9 +99,9 @@
                 <div id="output-rows" class="field-builder"></div>
             </section>
 
-            <div class="service-editor-submit"><div><strong>آماده ذخیره‌سازی است؟</strong><span>پس از ذخیره، سرویس فعال در حساب کاربران تخصیص‌یافته نمایش داده می‌شود.</span></div><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> ذخیره سرویس</button></div>
         </main>
     </div>
+    <div class="service-editor-submit"><div><strong>آماده ذخیره‌سازی است؟</strong><span>پس از ذخیره، سرویس فعال در حساب کاربران تخصیص‌یافته نمایش داده می‌شود.</span></div><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> ذخیره سرویس</button></div>
 </form>
 @endsection
 

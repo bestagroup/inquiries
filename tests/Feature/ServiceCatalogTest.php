@@ -70,7 +70,9 @@ class ServiceCatalogTest extends TestCase
             ->assertSee('مراحل تعریف سرویس')
             ->assertSee('مشخصات اصلی')
             ->assertSee('اتصال به API')
-            ->assertSee('افزودن ورودی');
+            ->assertSee('افزودن ورودی')
+            ->assertSee('class="service-editor-submit"', false)
+            ->assertSee('type="submit"', false);
     }
 
     public function test_user_can_open_the_clear_service_execution_form(): void
