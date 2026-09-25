@@ -38,7 +38,7 @@
                         <div class="col-md-6">
                             <div class="border rounded p-2 h-100">
                                 <div class="text-muted small">{{ $field?->label ?? $key }}</div>
-                                <div class="fw-bold text-break">{{ $field?->is_sensitive ? '••••••••' : (is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE))) }}</div>
+                                <div class="fw-bold text-break">{{ (!$field || $field->is_sensitive || $field->type->value === 'image' || in_array($key, $serviceRequest->sensitive_input_keys ?? [], true)) ? '••••••••' : (is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE))) }}</div>
                             </div>
                         </div>
                     @empty

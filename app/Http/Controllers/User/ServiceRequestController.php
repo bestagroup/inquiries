@@ -43,11 +43,12 @@ class ServiceRequestController extends Controller
         AuditLogger $audit,
     ): RedirectResponse {
         $this->authorizeService($service);
-        $input = $validator->validate($service, (array) $request->input('input', []));
+        $input = $validator->validate($service, (array) ($request->all()['input'] ?? []));
         $serviceRequest = ServiceRequest::query()->create([
             'user_id' => $request->user()->id,
             'service_id' => $service->id,
             'input_payload' => $input,
+            'sensitive_input_keys' => $service->sensitiveInputKeys(),
             'status' => 'pending',
         ]);
 
@@ -105,10 +106,10 @@ class ServiceRequestController extends Controller
     ): RedirectResponse {
         $this->authorizeOwner($request);
         $this->assertCanReexecute($request);
-        $input = $validator->validate($request->service, (array) $httpRequest->input('input', []));
+        $input = $validator->validate($request->service, (array) ($httpRequest->all()['input'] ?? []));
 
         try {
-            $attempt = $dispatcher->dispatch($request->fresh(['service', 'user']), $input);
+            $attempt = $dispatcher->dispatch($request->fresh(['service', 'user']), $input, $request->service->sensitiveInputKeys());
             $request->refresh();
             $audit->write('request.updated_and_executed', $request, ['attempt_id' => $attempt?->id, 'queued' => $attempt === null]);
 

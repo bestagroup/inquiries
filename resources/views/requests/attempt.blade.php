@@ -22,7 +22,7 @@
         <div class="card h-100"><div class="card-header"><strong>ورودی همین اجرا</strong></div><div class="card-body"><div class="row g-2">
             @forelse((array)$attempt->request_payload as $key => $value)
                 @php($field = $inputFields->get($key))
-                <div class="col-md-6"><div class="border rounded p-2 h-100"><div class="text-muted small">{{ $field?->label ?? $key }}</div><div class="fw-bold text-break">{{ $field?->is_sensitive ? '••••••••' : (is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE))) }}</div></div></div>
+                <div class="col-md-6"><div class="border rounded p-2 h-100"><div class="text-muted small">{{ $field?->label ?? $key }}</div><div class="fw-bold text-break">{{ (!$field || $field->is_sensitive || $field->type->value === 'image' || in_array($key, $attempt->sensitive_input_keys ?? [], true)) ? '••••••••' : (is_bool($value) ? ($value ? 'بله' : 'خیر') : (is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE))) }}</div></div></div>
             @empty
                 <div class="text-muted">این اجرا ورودی‌ای نداشته است.</div>
             @endforelse

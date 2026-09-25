@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FieldType;
 use App\Enums\PayloadMode;
 use App\Enums\ResponseFormat;
 use App\Enums\ServiceHttpMethod;
@@ -49,6 +50,14 @@ class RemoteService extends Model
     public function outputFields(): HasMany
     {
         return $this->fields()->where('direction', 'output');
+    }
+
+    public function sensitiveInputKeys(): array
+    {
+        return $this->inputFields
+            ->filter(fn (ServiceField $field): bool => $field->is_sensitive || $field->type === FieldType::Image)
+            ->pluck('key')
+            ->all();
     }
 
     public function users(): BelongsToMany

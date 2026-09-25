@@ -11,14 +11,15 @@ use Illuminate\Support\Str;
 class ServiceRequest extends Model
 {
     protected $fillable = [
-        'uuid', 'execution_token', 'user_id', 'service_id', 'input_payload', 'status', 'attempt_count',
+        'uuid', 'execution_token', 'user_id', 'service_id', 'input_payload', 'sensitive_input_keys', 'status', 'attempt_count',
         'last_requested_at', 'last_responded_at', 'last_http_status', 'last_duration_ms', 'last_error',
     ];
 
-    protected $hidden = ['input_payload', 'execution_token'];
+    protected $hidden = ['input_payload', 'sensitive_input_keys', 'execution_token'];
 
     protected $casts = [
         'input_payload' => 'encrypted:array',
+        'sensitive_input_keys' => 'encrypted:array',
         'status' => ServiceRequestStatus::class,
         'last_requested_at' => 'datetime',
         'last_responded_at' => 'datetime',

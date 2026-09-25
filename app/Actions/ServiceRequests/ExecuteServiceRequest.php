@@ -66,6 +66,7 @@ class ExecuteServiceRequest
                 'endpoint_url' => $service->endpoint_url,
                 'http_method' => $service->http_method->value,
                 'request_payload' => $locked->input_payload,
+                'sensitive_input_keys' => $locked->sensitive_input_keys,
                 'price_amount' => $priceAmount,
                 'started_at' => now(),
             ]);

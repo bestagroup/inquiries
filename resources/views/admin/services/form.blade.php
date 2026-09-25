@@ -117,8 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
     const errorClass = name => validationErrors[name] ? ' is-invalid' : '';
     const errorFeedback = name => validationErrors[name] ? `<div class="invalid-feedback">${escape(validationErrors[name][0])}</div>` : '';
-    const inputTypes = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب'};
-    const outputTypes = {...inputTypes, array: 'آرایه', object: 'آبجکت'};
+    const inputTypes = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب', image: 'تصویر (Base64 خودکار)'};
+    const outputTypes = {text: 'متن', number: 'عدد', boolean: 'بله / خیر', date: 'تاریخ', select: 'فهرست انتخاب', array: 'آرایه', object: 'آبجکت'};
     const typeOptions = (types, selected) => Object.entries(types).map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
 
     const emptyState = (kind, title, text) => `<div class="field-builder-empty"><i class="bi ${kind === 'input' ? 'bi-ui-radios-grid' : 'bi-braces'}"></i><strong>${title}</strong><span>${text}</span></div>`;
@@ -127,13 +127,27 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="row g-3">
             <div class="col-md-6 col-xl-3"><label class="form-label">عنوان نمایشی <b>*</b></label><input class="form-control${errorClass(`inputs.${index}.label`)}" name="inputs[${index}][label]" value="${escape(value.label)}" placeholder="کد ملی" required>${errorFeedback(`inputs.${index}.label`)}</div>
             <div class="col-md-6 col-xl-3"><label class="form-label">کلید API <b>*</b></label><input class="form-control${errorClass(`inputs.${index}.key`)}" dir="ltr" name="inputs[${index}][key]" value="${escape(value.key)}" placeholder="national_id" required>${errorFeedback(`inputs.${index}.key`)}</div>
-            <div class="col-md-6 col-xl-3"><label class="form-label">نوع فیلد</label><select class="form-select${errorClass(`inputs.${index}.type`)}" name="inputs[${index}][type]">${typeOptions(inputTypes, value.type || 'text')}</select>${errorFeedback(`inputs.${index}.type`)}</div>
+            <div class="col-md-6 col-xl-3"><label class="form-label">نوع فیلد</label><select class="form-select${errorClass(`inputs.${index}.type`)}" name="inputs[${index}][type]">${typeOptions(inputTypes, value.type || 'text')}</select>${errorFeedback(`inputs.${index}.type`)}<div class="form-text d-none" data-image-help>تصویر JPG، PNG یا WebP تا {{ number_format(config('remote_services.max_image_kilobytes')) }} کیلوبایت دریافت و به Base64 خام تبدیل می‌شود.</div></div>
             <div class="col-md-6 col-xl-3"><label class="form-label">قوانین اعتبارسنجی</label><input class="form-control${errorClass(`inputs.${index}.validation_rules`)}" dir="ltr" name="inputs[${index}][validation_rules]" value="${escape(value.validation_rules)}" placeholder="required|digits:10">${errorFeedback(`inputs.${index}.validation_rules`)}</div>
-            <div class="col-md-6"><label class="form-label">مقدار پیش‌فرض</label><input class="form-control" name="inputs[${index}][default_value]" value="${escape(value.default_value)}"></div>
+            <div class="col-md-6"><label class="form-label">مقدار پیش‌فرض</label><input class="form-control${errorClass(`inputs.${index}.default_value`)}" name="inputs[${index}][default_value]" value="${escape(value.default_value)}">${errorFeedback(`inputs.${index}.default_value`)}</div>
             <div class="col-md-6"><label class="form-label">گزینه‌ها <small>(برای فهرست انتخاب)</small></label><input class="form-control${errorClass(`inputs.${index}.options`)}" name="inputs[${index}][options]" value="${escape(value.options)}" placeholder="گزینه اول، گزینه دوم">${errorFeedback(`inputs.${index}.options`)}</div>
             <div class="col-12 field-builder-checks"><label><input type="hidden" name="inputs[${index}][is_required]" value="0"><input class="form-check-input" type="checkbox" name="inputs[${index}][is_required]" value="1" ${Number(value.is_required) ? 'checked' : ''}> اجباری باشد</label><label><input type="hidden" name="inputs[${index}][is_sensitive]" value="0"><input class="form-check-input" type="checkbox" name="inputs[${index}][is_sensitive]" value="1" ${Number(value.is_sensitive) ? 'checked' : ''}> مقدار حساس و مخفی است</label></div>
         </div>
     </div>`;
+    const syncImageRow = row => {
+        const isImage = row.querySelector('select[name$="[type]"]').value === 'image';
+        const defaultInput = row.querySelector('input[name$="[default_value]"]');
+        const rulesInput = row.querySelector('input[name$="[validation_rules]"]');
+        const sensitiveInput = row.querySelector('input[type="checkbox"][name$="[is_sensitive]"]');
+        if (isImage) {
+            defaultInput.value = '';
+            sensitiveInput.checked = true;
+        }
+        defaultInput.disabled = isImage;
+        rulesInput.placeholder = isImage ? 'max:1024' : 'required|digits:10';
+        sensitiveInput.disabled = isImage;
+        row.querySelector('[data-image-help]').classList.toggle('d-none', !isImage);
+    };
     const outputRow = (value = {}, index) => `<div class="field-builder-row" data-kind="output">
         <div class="field-builder-row-head"><div><span>${index + 1}</span><strong>${escape(value.label) || 'خروجی جدید'}</strong></div><button type="button" class="btn btn-sm btn-link text-danger remove-row"><i class="bi bi-trash3"></i> حذف</button></div>
         <div class="row g-3">
@@ -147,14 +161,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const render = () => {
         inputBox.innerHTML = inputRows.length ? inputRows.map(inputRow).join('') : emptyState('input', 'هنوز ورودی تعریف نشده است', 'برای ساخت فرم استعلام، اولین ورودی را اضافه کنید.');
         outputBox.innerHTML = outputRows.length ? outputRows.map(outputRow).join('') : emptyState('output', 'خروجی مشخصی تعریف نشده است', 'در این حالت پاسخ کامل سرویس ذخیره خواهد شد.');
+        inputBox.querySelectorAll('.field-builder-row').forEach(syncImageRow);
     };
 
     const addRow = (box, template, defaults) => {
         const existingRows = box.querySelectorAll('.field-builder-row');
         if (!existingRows.length) box.innerHTML = '';
         box.insertAdjacentHTML('beforeend', template(defaults, existingRows.length));
+        if (box === inputBox) syncImageRow(box.lastElementChild);
         box.lastElementChild?.scrollIntoView({behavior: 'smooth', block: 'center'});
     };
+
+    inputBox.addEventListener('change', event => {
+        if (event.target.matches('select[name$="[type]"]')) syncImageRow(event.target.closest('.field-builder-row'));
+    });
 
     document.getElementById('add-input').addEventListener('click', () => addRow(inputBox, inputRow, {type: 'text', is_required: 1}));
     document.getElementById('add-output').addEventListener('click', () => addRow(outputBox, outputRow, {type: 'text'}));

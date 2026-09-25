@@ -117,10 +117,10 @@ class ServiceController extends Controller
                 'type' => $row['type'] ?? FieldType::Text->value,
                 'is_required' => (bool) ($row['is_required'] ?? false),
                 'validation_rules' => $rules ?: null,
-                'default_value' => $row['default_value'] ?? null,
+                'default_value' => $direction === FieldDirection::Input && ($row['type'] ?? null) === FieldType::Image->value ? null : ($row['default_value'] ?? null),
                 'json_path' => $row['json_path'] ?? null,
                 'options' => $options ?: null,
-                'is_sensitive' => (bool) ($row['is_sensitive'] ?? false),
+                'is_sensitive' => ($direction === FieldDirection::Input && ($row['type'] ?? null) === FieldType::Image->value) || (bool) ($row['is_sensitive'] ?? false),
                 'sort_order' => $index,
             ]);
         }

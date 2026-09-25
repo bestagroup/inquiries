@@ -71,6 +71,7 @@ class SaveServiceRequest extends FormRequest
                 FieldType::Boolean->value,
                 FieldType::Date->value,
                 FieldType::Select->value,
+                FieldType::Image->value,
             ])],
             'inputs.*.is_required' => ['nullable', 'boolean'],
             'inputs.*.validation_rules' => ['nullable', 'string', 'max:500'],
@@ -81,7 +82,15 @@ class SaveServiceRequest extends FormRequest
             'outputs' => ['nullable', 'array', 'max:100'],
             'outputs.*.key' => ['required', 'distinct', 'regex:/^[A-Za-z_][A-Za-z0-9_-]{0,127}$/'],
             'outputs.*.label' => ['required', 'string', 'max:255'],
-            'outputs.*.type' => ['required', Rule::enum(FieldType::class)],
+            'outputs.*.type' => ['required', Rule::in([
+                FieldType::Text->value,
+                FieldType::Number->value,
+                FieldType::Boolean->value,
+                FieldType::Date->value,
+                FieldType::Select->value,
+                FieldType::Array->value,
+                FieldType::Object->value,
+            ])],
             'outputs.*.json_path' => ['nullable', 'string', 'max:512'],
         ];
     }
@@ -102,6 +111,12 @@ class SaveServiceRequest extends FormRequest
             }
 
             foreach ((array) $this->input('inputs', []) as $index => $input) {
+                if (($input['type'] ?? null) === FieldType::Image->value && $this->input('payload_mode') === PayloadMode::Query->value) {
+                    $validator->errors()->add('payload_mode', 'برای سرویس دارای ورودی تصویر، نحوه ارسال باید JSON Body یا Form URL Encoded باشد.');
+                }
+                if (($input['type'] ?? null) === FieldType::Image->value && filled($input['default_value'] ?? null)) {
+                    $validator->errors()->add("inputs.{$index}.default_value", 'برای ورودی تصویر مقدار پیش‌فرض قابل تعریف نیست.');
+                }
                 if (($input['type'] ?? null) === FieldType::Select->value) {
                     $options = preg_split('/\r\n|\r|\n|,/', (string) ($input['options'] ?? ''));
                     if (count(array_filter(array_map('trim', $options ?: []))) === 0) {
@@ -111,6 +126,11 @@ class SaveServiceRequest extends FormRequest
 
                 foreach (explode('|', (string) ($input['validation_rules'] ?? '')) as $rule) {
                     $rule = trim($rule);
+                    if (($input['type'] ?? null) === FieldType::Image->value && $rule !== '' && preg_match('/^(max|min):\d+$/', $rule) !== 1) {
+                        $validator->errors()->add("inputs.{$index}.validation_rules", 'برای ورودی تصویر فقط محدودیت حجم min و max پشتیبانی می‌شود.');
+
+                        continue;
+                    }
                     if ($rule !== '' && preg_match('/^(email|url|uuid|alpha|alpha_num|integer|numeric|string|boolean|date|nullable|required|max:\d+|min:\d+|size:\d+|digits:\d+|digits_between:\d+,\d+|between:\d+,\d+|in:[^|]{1,120})$/', $rule) !== 1) {
                         $validator->errors()->add("inputs.{$index}.validation_rules", "قانون اعتبارسنجی «{$rule}» پشتیبانی نمی‌شود.");
                     }

@@ -189,6 +189,44 @@ class ServiceCatalogTest extends TestCase
             ->assertSessionHasErrors('inputs.0.type');
     }
 
+    public function test_admin_can_define_an_image_input_that_is_always_sensitive_and_has_no_default(): void
+    {
+        config()->set('remote_services.enforce_dns_resolution', false);
+        $this->seed(ServiceCatalogSeeder::class);
+        $admin = User::factory()->admin()->create();
+        $service = RemoteService::query()->where('slug', 'identity-inquiry')->firstOrFail();
+        $imageInput = [
+            'label' => 'تصویر مدرک',
+            'key' => 'document_image',
+            'type' => FieldType::Image->value,
+            'validation_rules' => 'max:1024',
+            'default_value' => '',
+            'options' => '',
+            'is_required' => 1,
+            'is_sensitive' => 0,
+        ];
+
+        $this->actingAs($admin)->put(route('admin.services.update', $service), $this->servicePayload($service, [
+            'inputs' => [array_replace($imageInput, ['default_value' => 'not-allowed'])],
+        ]))->assertSessionHasErrors('inputs.0.default_value');
+
+        $this->actingAs($admin)->put(route('admin.services.update', $service), $this->servicePayload($service, [
+            'http_method' => 'GET',
+            'payload_mode' => 'query',
+            'inputs' => [$imageInput],
+        ]))->assertSessionHasErrors('payload_mode');
+
+        $this->actingAs($admin)->put(route('admin.services.update', $service), $this->servicePayload($service, [
+            'inputs' => [$imageInput],
+        ]))->assertRedirect(route('admin.services.index'));
+
+        $field = $service->fresh()->inputFields()->where('key', 'document_image')->firstOrFail();
+        $this->assertSame(FieldType::Image, $field->type);
+        $this->assertTrue($field->is_sensitive);
+        $this->assertNull($field->default_value);
+        $this->assertSame(['max:1024'], $field->validation_rules);
+    }
+
     public function test_admin_can_define_an_object_output_and_mapper_preserves_its_value(): void
     {
         config()->set('remote_services.enforce_dns_resolution', false);

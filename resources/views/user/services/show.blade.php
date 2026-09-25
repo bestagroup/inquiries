@@ -35,7 +35,7 @@
                 <small><b>*</b> فیلد اجباری</small>
             </div>
 
-            <form method="POST" action="{{ route('requests.store', $service) }}" data-inquiry-submit>
+            <form method="POST" action="{{ route('requests.store', $service) }}" enctype="multipart/form-data" data-inquiry-submit>
                 @csrf
                 <div class="row g-3">
                     @forelse($service->inputFields as $field)
@@ -54,6 +54,9 @@
                                 <select class="form-select @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" name="input[{{ $field->key }}]" @required($field->is_required)>
                                     <option value="">انتخاب کنید</option><option value="1" @selected((string) old('input.'.$field->key) === '1')>بله</option><option value="0" @selected((string) old('input.'.$field->key) === '0')>خیر</option>
                                 </select>
+                            @elseif($field->type->value === 'image')
+                                <input class="form-control @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" type="file" name="input[{{ $field->key }}]" accept="image/jpeg,image/png,image/webp" @required($field->is_required)>
+                                <div class="form-text">تصویر JPG، PNG یا WebP تا {{ number_format(config('remote_services.max_image_kilobytes')) }} کیلوبایت؛ مجموع تصاویر تا {{ number_format(config('remote_services.max_total_image_kilobytes')) }} کیلوبایت. فایل به‌صورت خودکار به Base64 تبدیل می‌شود.</div>
                             @elseif($field->is_sensitive)
                                 <div class="sensitive-input">
                                     <input class="form-control @error($field->key) is-invalid @enderror" id="{{ $fieldId }}" type="password" name="input[{{ $field->key }}]" inputmode="{{ $hasDigitsRule ? 'numeric' : 'text' }}" autocomplete="off" @required($field->is_required)>

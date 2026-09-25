@@ -21,10 +21,10 @@ class DispatchServiceRequest
         private readonly WalletService $wallets,
     ) {}
 
-    public function dispatch(ServiceRequest $serviceRequest, ?array $inputPayload = null): ?ServiceRequestAttempt
+    public function dispatch(ServiceRequest $serviceRequest, ?array $inputPayload = null, ?array $sensitiveInputKeys = null): ?ServiceRequestAttempt
     {
         $token = (string) Str::uuid();
-        $this->acquireExecutionLease($serviceRequest, $token, $inputPayload);
+        $this->acquireExecutionLease($serviceRequest, $token, $inputPayload, $sensitiveInputKeys);
 
         if (! config('remote_services.async', true)) {
             try {
@@ -50,9 +50,9 @@ class DispatchServiceRequest
             : $serviceRequest->attempts()->first();
     }
 
-    private function acquireExecutionLease(ServiceRequest $serviceRequest, string $token, ?array $inputPayload): void
+    private function acquireExecutionLease(ServiceRequest $serviceRequest, string $token, ?array $inputPayload, ?array $sensitiveInputKeys): void
     {
-        DB::transaction(function () use ($serviceRequest, $token, $inputPayload): void {
+        DB::transaction(function () use ($serviceRequest, $token, $inputPayload, $sensitiveInputKeys): void {
             $locked = ServiceRequest::query()
                 ->whereKey($serviceRequest->getKey())
                 ->lockForUpdate()
@@ -78,6 +78,7 @@ class DispatchServiceRequest
 
             if ($inputPayload !== null) {
                 $values['input_payload'] = $inputPayload;
+                $values['sensitive_input_keys'] = $sensitiveInputKeys ?? [];
             }
 
             $locked->forceFill($values)->save();
